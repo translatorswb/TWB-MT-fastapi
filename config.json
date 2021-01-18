@@ -1,0 +1,50 @@
+{
+    "models_root": "/app/models",
+    "models": [
+        {
+            "src": "xx",
+            "tgt": "xx",
+            "model_type": null,
+            "model_path": "xxxx",
+            "load": true,
+            "sentence_split": null,
+            "pipeline": {
+                "lowercase": true,
+                "tokenize": true,
+                "bpe": false,
+                "translate": false,
+                "recase": true
+            }
+        },
+        {
+            "src": "fr",
+            "tgt": "en",
+            "alt": "alt",
+            "model_type": "opus",
+            "model_path": null,
+            "load": true,
+            "sentence_split": "nltk" ,
+            "pipeline": {
+                "lowercase": true,
+                "translate": true,
+                "recase": true
+            }
+        },
+        {
+            "src": "fr",
+            "tgt": "swc",
+            "model_type": "ctranslator2",
+            "model_path": "frsw",
+            "bpe_file": "BPE-mtedmix-6000.codes",
+            "load": true,
+            "sentence_split": "nltk",
+            "pipeline": {
+                "lowercase": true,
+                "tokenize": true,
+                "bpe": true,
+                "translate": true,
+                "recase": true
+            }
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+fastapi==0.63.0
+uvicorn==0.11.2
+httpx==0.11.1
+subword_nmt==0.3.6
+ctranslate2==1.16.2
+sacremoses==0.0.43
+nltk==3.5
+sentencepiece==0.1.94
+torch==1.7.1
+torchvision==0.8.2
+transformers==4.0.1
