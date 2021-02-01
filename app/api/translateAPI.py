@@ -223,11 +223,20 @@ class TranslationRequest(BaseModel):
     alt: Optional[str] = None
     text: str
 
+class BatchTranslationRequest(BaseModel):
+    src: str
+    tgt: str
+    alt: Optional[str] = None
+    texts: List[str]
+
 class TranslationResponse(BaseModel):
     translation: str
 
+class BatchTranslationResponse(BaseModel):
+    translation: List[str]
+
 @translate.post('/', status_code=200)
-async def translate_request(request: TranslationRequest):
+async def translate_sentence(request: TranslationRequest):
 
     model_id = get_model_id(request.src, request.tgt, request.alt)
 
@@ -237,6 +246,24 @@ async def translate_request(request: TranslationRequest):
     translation = do_translate(model_id, request.text)
 
     response = TranslationResponse(translation=translation)
+    return response
+
+@translate.post('/batch', status_code=200)
+async def translate_batch(request: BatchTranslationRequest):
+    print(request.texts)
+    print(type(request.texts))
+
+    model_id = get_model_id(request.src, request.tgt, request.alt)
+
+    if not model_id in loaded_models:
+        raise HTTPException(status_code=401, detail="Language pair %s is not supported."%(request.src + "-" + request.tgt))
+    
+    translated_batch = []
+    for sentence in request.texts:
+        translation = do_translate(model_id, sentence)
+        translated_batch.append(translation)
+
+    response = BatchTranslationResponse(translation=translated_batch)
     return response
 
 
