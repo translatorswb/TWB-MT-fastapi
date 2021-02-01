@@ -7,9 +7,9 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from pydantic import BaseModel 
 
 #constants
-CONFIG_JSON_PATH = os.getenv('MT_API_CONFIG')
-CTRANSLATE_DEVICE = os.getenv('MT_API_DEVICE')
-CTRANSLATE_INTER_THREADS = int(os.getenv('MT_API_THREADS'))
+CONFIG_JSON_PATH = os.getenv('MT_API_CONFIG') 
+CTRANSLATE_DEVICE = os.getenv('MT_API_DEVICE') or 'cpu'
+CTRANSLATE_INTER_THREADS = int(os.getenv('MT_API_THREADS') or '16')
 MOSES_TOKENIZER_DEFAULT_LANG = 'en'
 
 translate = APIRouter()
@@ -226,18 +226,18 @@ class TranslationRequest(BaseModel):
 class TranslationResponse(BaseModel):
     translation: str
 
-@translate.get('/', status_code=200)
-async def index(request: TranslationRequest):
-    #TODO: LOG request
+@translate.post('/', status_code=200)
+async def translate_request(request: TranslationRequest):
+
     model_id = get_model_id(request.src, request.tgt, request.alt)
 
+    if not model_id in loaded_models:
+        raise HTTPException(status_code=401, detail="Language pair %s is not supported."%(request.src + "-" + request.tgt))
+    
     translation = do_translate(model_id, request.text)
 
-    if translation:
-        response = TranslationResponse(translation=translation)
-        return response
-    else:
-        raise HTTPException(status_code=401, detail="Language pair %s is not supported."%(request.src + "-" + request.tgt))
+    response = TranslationResponse(translation=translation)
+    return response
 
 
 @translate.on_event("startup")

@@ -1,6 +1,6 @@
 fastapi==0.63.0
-uvicorn==0.11.2
-httpx==0.11.1
+uvicorn==0.13.3
+httpx==0.16.1
 subword_nmt==0.3.6
 ctranslate2==1.16.2
 sacremoses==0.0.43
