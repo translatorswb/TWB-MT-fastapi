@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from fastapi import Header, APIRouter, HTTPException
 import os
 import json
@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 #constants
 CONFIG_JSON_PATH = os.getenv('MT_API_CONFIG') 
+MODELS_ROOT_DIR = os.getenv('MODELS_ROOT')
 CTRANSLATE_DEVICE = os.getenv('MT_API_DEVICE') or 'cpu'
 CTRANSLATE_INTER_THREADS = int(os.getenv('MT_API_THREADS') or '16')
 MOSES_TOKENIZER_DEFAULT_LANG = 'en'
@@ -33,6 +34,21 @@ def get_model_id(src, tgt, alt_id=None):
     if alt_id:
         model_id += "_" + alt_id
     return model_id
+
+def parse_model_id(model_id):
+    fields = model_id.split("_")
+    if len(fields) == 2:
+        alt=""
+    elif len(fields) == 3:
+        alt = fields[2]
+    else:
+        return False
+
+    src = fields[0]
+    tgt = fields[1]
+
+    return src, tgt, alt
+
 
 def get_ctranslator(ctranslator_model_path):
     from ctranslate2 import Translator
@@ -182,7 +198,7 @@ def load_models(config_path):
 
             if 'bpe' in model_config['pipeline'] and model_config['pipeline']['bpe']:
                 print("bpe", end=" ")
-                model_dir = os.path.join(config_data['models_root'], model_config['model_path'])
+                model_dir = os.path.join(MODELS_ROOT_DIR, model_config['model_path'])
                 loaded_models[model_id]['preprocessors'].append(get_bpe_segmenter(os.path.join(model_dir, model_config['bpe_file'])))
             elif model_config['model_type'] == 'ctranslator2':
                 loaded_models[model_id]['preprocessors'].append(token_segmenter)
@@ -191,7 +207,7 @@ def load_models(config_path):
                 print("translate", end="")
                 if model_config['model_type'] == 'ctranslator2':
                     print("-ctranslator2", end=" ")
-                    model_dir = os.path.join(config_data['models_root'], model_config['model_path'])
+                    model_dir = os.path.join(MODELS_ROOT_DIR, model_config['model_path'])
                     loaded_models[model_id]['translator'] = get_batch_ctranslator(model_dir)  
                 elif model_config['model_type'] == 'opus':
                     loaded_models[model_id]['translator'] = get_batch_opustranslator(loaded_models[model_id]['src'], loaded_models[model_id]['tgt'])
@@ -235,6 +251,9 @@ class TranslationResponse(BaseModel):
 class BatchTranslationResponse(BaseModel):
     translation: List[str]
 
+class LanguagesResponse(BaseModel):
+    languages: Dict
+
 @translate.post('/', status_code=200)
 async def translate_sentence(request: TranslationRequest):
 
@@ -265,6 +284,21 @@ async def translate_batch(request: BatchTranslationRequest):
 
     response = BatchTranslationResponse(translation=translated_batch)
     return response
+
+@translate.get('/languages', status_code=200)
+async def languages():
+    languages_list = {}
+
+    for model_id in loaded_models.keys():
+        source, target, alt = parse_model_id(model_id)
+        if not source in languages_list:
+            languages_list[source] = {}
+        if not target in languages_list[source]:
+            languages_list[source][target] = []
+
+        languages_list[source][target].append(model_id)
+
+    return LanguagesResponse(languages=languages_list)
 
 
 @translate.on_event("startup")
