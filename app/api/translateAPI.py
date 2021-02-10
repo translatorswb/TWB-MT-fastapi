@@ -260,7 +260,7 @@ async def translate_sentence(request: TranslationRequest):
     model_id = get_model_id(request.src, request.tgt, request.alt)
 
     if not model_id in loaded_models:
-        raise HTTPException(status_code=401, detail="Language pair %s is not supported."%(request.src + "-" + request.tgt))
+        raise HTTPException(status_code=404, detail="Language pair %s is not supported."%model_id)
     
     translation = do_translate(model_id, request.text)
 
@@ -275,7 +275,7 @@ async def translate_batch(request: BatchTranslationRequest):
     model_id = get_model_id(request.src, request.tgt, request.alt)
 
     if not model_id in loaded_models:
-        raise HTTPException(status_code=401, detail="Language pair %s is not supported."%(request.src + "-" + request.tgt))
+        raise HTTPException(status_code=404, detail="Language pair %s is not supported."%model_id)
     
     translated_batch = []
     for sentence in request.texts:
