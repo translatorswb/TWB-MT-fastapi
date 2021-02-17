@@ -18,6 +18,7 @@ translate = APIRouter()
 #models and data
 loaded_models = {}
 config_data = {}
+language_codes = {}
 
 #processors
 nltk_sentence_segmenter = lambda x : sent_tokenize(x)   #string IN -> list OUT
@@ -163,7 +164,8 @@ def read_config(config_file):
 
 def load_models(config_path):
     config_data = read_config(CONFIG_JSON_PATH)
-
+    global language_codes
+    language_codes = config_data['languages']
     for model_config in config_data['models']:
         if model_config['load']:
 
@@ -252,6 +254,7 @@ class BatchTranslationResponse(BaseModel):
     translation: List[str]
 
 class LanguagesResponse(BaseModel):
+    models: Dict
     languages: Dict
 
 @translate.post('/', status_code=200)
@@ -288,7 +291,7 @@ async def translate_batch(request: BatchTranslationRequest):
 @translate.get('/languages', status_code=200)
 async def languages():
     languages_list = {}
-
+    print(language_codes)
     for model_id in loaded_models.keys():
         source, target, alt = parse_model_id(model_id)
         if not source in languages_list:
@@ -298,7 +301,7 @@ async def languages():
 
         languages_list[source][target].append(model_id)
 
-    return LanguagesResponse(languages=languages_list)
+    return LanguagesResponse(languages=language_codes, models=languages_list)
 
 
 @translate.on_event("startup")

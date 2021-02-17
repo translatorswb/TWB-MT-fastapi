@@ -1,4 +1,5 @@
 {
+    "languages":{"ar":"Levantine Arabic", "en":"English", "fr":"French", "swc":"Congolese Swahili", "ti":"Tigrinya"},
     "models": [
         {
             "src": "xx",
