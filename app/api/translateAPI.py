@@ -69,7 +69,7 @@ def get_batch_opustranslator(src, tgt):
     tokenizer = MarianTokenizer.from_pretrained(model_name)
     model = MarianMTModel.from_pretrained(model_name)
 
-    translator = lambda x: tokenizer.batch_decode(model.generate(**tokenizer.prepare_seq2seq_batch(src_texts=x, return_tensors="pt")), skip_special_tokens=True)
+    translator = lambda x: tokenizer.batch_decode(model.generate(**tokenizer.prepare_seq2seq_batch(src_texts=x, return_tensors="pt")), skip_special_tokens=True) if x else ""
     return translator
 
 def get_moses_tokenizer(lang):
@@ -132,14 +132,14 @@ def do_translate(model_id, text):
         #print(sentence_batch)
 
         #preprocess
-        #print("Preprocess")
+        # print("Preprocess")
         for step in loaded_models[model_id]['preprocessors']:
             sentence_batch = [step(s) for s in sentence_batch]
-            #print(sentence_batch)
+            print(sentence_batch)
 
         #translate batch (ctranslate only)
         translated_sentence_batch = loaded_models[model_id]['translator'](sentence_batch)
-        #print(translated_sentence_batch)
+        # print(translated_sentence_batch)
 
         #postprocess
         #print("Postprocess")
