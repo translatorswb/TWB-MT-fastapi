@@ -133,8 +133,8 @@ def get_custom_tokenizer(punkset):
     return lambda x: tokenize_with_punkset(x, punkset)
 
 def do_translate(model_id, text):
-    print("do_translate")
-    print(text)
+    # print("do_translate")
+    # print(text)
 
     if model_id in loaded_models:
         if loaded_models[model_id]['sentence_segmenter']:
@@ -142,34 +142,35 @@ def do_translate(model_id, text):
         else:
             sentence_batch = [text]
 
-        print("sentence_batch")
-        print(sentence_batch)
+        # print("sentence_batch")
+        # print(sentence_batch)
 
         #preprocess
-        print("Preprocess")
+        # print("Preprocess")
         for step in loaded_models[model_id]['preprocessors']:
-            print(step)
             sentence_batch = [step(s) for s in sentence_batch]
-            print(sentence_batch)
+            # print(step)
+            # print(sentence_batch)
 
         #translate batch (ctranslate only)
         if loaded_models[model_id]['translator']:
             translated_sentence_batch = loaded_models[model_id]['translator'](sentence_batch)
-            print("translated_sentence_batch")
-            print(translated_sentence_batch)
+            # print("translated_sentence_batch")
+            # print(translated_sentence_batch)
         else:
             translated_sentence_batch = sentence_batch
 
         #postprocess
-        print("Postprocess")
+        # print("Postprocess")
         tgt_sentences = translated_sentence_batch
         for step in loaded_models[model_id]['postprocessors']:
             tgt_sentences = [step(s) for s in tgt_sentences]
-            print(tgt_sentences)
+            # print(step)
+            # print(tgt_sentences)
 
         tgt_text = " ".join(tgt_sentences)
-        print("tgt_text")
-        print(tgt_text)
+        # print("tgt_text")
+        # print(tgt_text)
 
         return tgt_text
     else:
@@ -257,7 +258,7 @@ def load_models(config_path):
                     print("WARNING: Model path %s not found for model %s. Can't load custom translation model or segmenters."%(model_dir, model_id))
                     model_dir = None
             else:
-                print("WARNING: Model path not specified. Can't load custom translation model or segmenters.")
+                print("WARNING: Model path not specified for model %s. Can't load custom translation model or segmenters."%model_id)
                 model_dir = None
 
             #More configuration checks
