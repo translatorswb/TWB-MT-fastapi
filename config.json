@@ -25,6 +25,18 @@
             }
         },
         {
+            "src": "en",
+            "tgt": "fr",
+            "model_type": "opus",
+            "load": true,
+            "sentence_split": "nltk",
+            "pipeline": {
+                "lowercase": true,
+                "translate": true,
+                "recase": true
+            }
+        },
+        {
             "src": "ha",
             "tgt": "en",
             "model_type": "opus",
