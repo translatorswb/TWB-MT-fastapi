@@ -6,7 +6,7 @@
             "tgt": "xx",
             "model_type": "dummy",
             "model_path": null,
-            "load": true,
+            "load": false,
             "pipeline": {
                 "recase": true,
                 "translate": true
