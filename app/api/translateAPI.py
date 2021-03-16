@@ -13,6 +13,7 @@ CTRANSLATE_DEVICE = 'cuda' if os.getenv('MT_API_DEVICE')=='gpu' else 'cpu'
 CTRANSLATE_INTER_THREADS = int(os.getenv('MT_API_THREADS') or '16')
 MOSES_TOKENIZER_DEFAULT_LANG = 'en'
 SUPPORTED_MODEL_TYPES = ['opus', 'ctranslator2', 'dummy']
+MODEL_TAG_SEPARATOR = "-"
 
 translate = APIRouter()
 
@@ -32,13 +33,13 @@ dummy_translator = lambda x: x
 
 #MT operations
 def get_model_id(src, tgt, alt_id=None):
-    model_id = src + "_" + tgt
+    model_id = src + MODEL_TAG_SEPARATOR + tgt
     if alt_id:
-        model_id += "_" + alt_id
+        model_id += MODEL_TAG_SEPARATOR + alt_id
     return model_id
 
 def parse_model_id(model_id):
-    fields = model_id.split("_")
+    fields = model_id.split(MODEL_TAG_SEPARATOR)
     if len(fields) == 2:
         alt=""
     elif len(fields) == 3:
