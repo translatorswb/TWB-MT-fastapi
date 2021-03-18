@@ -49,7 +49,6 @@ For an French to English model, add the following configuration under `models` i
     "src": "fr",
     "tgt": "en",
     "model_type": "opus",
-    "model_path": null,
     "load": true,
     "sentence_split": "nltk" ,
     "pipeline": {
@@ -60,13 +59,19 @@ For an French to English model, add the following configuration under `models` i
 }
 ```
 
-## Build
+## Build and run (linux/mac)
 
-`docker-compose build`
+```
+pip install -r requirements.txt
+./run_local.sh
+```
 
-## Run
+## Build and run with docker-compose
 
-`docker-compose up`
+```
+docker-compose build
+docker-compose up
+```
 
 ## Example calls
 
