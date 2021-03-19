@@ -73,22 +73,15 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
 
-## Build and run with docker-compose (CPU)
+## Build and run with docker-compose
 
-```
-docker-compose build
-docker-compose up
-```
-
-## Build and run with docker-compose (GPU)
+### To use GPU
 
 Do the following edits on docker-compose file
 1. Remove comment `runtime: nvidia` line
 2. Under environment, set MT_API_DEVICE=gpu
 
 ```
-mv Dockerfile Dockerfile_cpu
-mv Dockerfile_gpu Dockerfile
 docker-compose build
 docker-compose up
 ```
