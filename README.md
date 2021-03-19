@@ -59,16 +59,36 @@ For an French to English model, add the following configuration under `models` i
 }
 ```
 
-## Build and run (linux/mac)
+## Build and run
+
+Set the environment variables:
+```
+MT_API_CONFIG=config.json
+MODELS_ROOT=models
+MT_API_DEVICE=gpu|cpu
+```
 
 ```
 pip install -r requirements.txt
-./run_local.sh
+uvicorn app.main:app --reload --port 8001
 ```
 
-## Build and run with docker-compose
+## Build and run with docker-compose (CPU)
 
 ```
+docker-compose build
+docker-compose up
+```
+
+## Build and run with docker-compose (GPU)
+
+Do the following edits on docker-compose file
+1. Remove comment `runtime: nvidia` line
+2. Under environment, set MT_API_DEVICE=gpu
+
+```
+mv Dockerfile Dockerfile_cpu
+mv Dockerfile_gpu Dockerfile
 docker-compose build
 docker-compose up
 ```
