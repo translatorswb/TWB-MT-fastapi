@@ -75,16 +75,19 @@ uvicorn app.main:app --reload --port 8001
 
 ## Build and run with docker-compose
 
-### To use GPU
-
-Do the following edits on docker-compose file
-1. Remove comment `runtime: nvidia` line
-2. Under environment, set MT_API_DEVICE=gpu
-
 ```
 docker-compose build
 docker-compose up
 ```
+
+### To use GPU
+
+Do the following edits on docker-compose file
+1. Remove comment `runtime: nvidia` line
+2. Under environment, set `MT_API_DEVICE=gpu`
+3. Rename `Dockerfile` to `Dockerfile-cpu`
+4. Rename `Dockerfile-gpu` to `Dockerfile`
+5. Build and run.
 
 ## Example calls
 
