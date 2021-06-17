@@ -1,4 +1,4 @@
-fastapi==0.63.0
+fastapi==0.65.2
 uvicorn==0.13.3
 httpx==0.16.1
 subword_nmt==0.3.6
