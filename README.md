@@ -75,20 +75,25 @@ uvicorn app.main:app --reload --port 8001
 
 ## Build and run with docker-compose
 
-### To use GPU
-
-Do the following edits on docker-compose file
-1. Remove comment `runtime: nvidia` line
-2. Under environment, set MT_API_DEVICE=gpu
-
 ```
 docker-compose build
 docker-compose up
 ```
 
+### To use GPU
+
+Do the following edits on docker-compose file
+1. Remove comment `runtime: nvidia` line
+2. Under environment, set `MT_API_DEVICE=gpu`
+3. Rename `Dockerfile` to `Dockerfile-cpu`
+4. Rename `Dockerfile-gpu` to `Dockerfile`
+5. Build and run.
+
 ## Example calls
 
-### Translation
+### Simple translation
+
+Endpoint for translating a single phrase. 
 
 #### cURL
 
@@ -109,18 +114,43 @@ response = r.json()
 print("Translation:", response['translation'])
 ```
 
-### Retrieve languages
+### Batch translation
+
+Endpoint for translating a list of sentences.
 
 #### cURL
 
 ```
-curl 'http://127.0.0.1:8001/api/v1/translate/languages'
+curl --location --request POST 'http://127.0.0.1:8001/api/v1/translate' \
+--header 'Content-Type: application/json' \
+--data-raw '{"src":"en", "tgt":"fr", "batch":["hello twb", "this is another sentence"]}'
+```
+
+#### Python
+
+```
+import httpx
+translate_service_url = "http://127.0.0.1:8001/api/v1/translate"
+json_data = {'src':'fr', 'tgt':'en', 'batch':["hello twb", "this is another sentence"]}
+r = httpx.post(translate_service_url, json=json_data)
+response = r.json()
+print("Translation:", response['translation'])
+```
+
+### Retrieve languages
+
+Retrieves a the list of supported languages and model pairs.
+
+#### cURL
+
+```
+curl 'http://127.0.0.1:8001/api/v1/translate/'
 ```
 
 #### Python
 ```
 import httpx
-translate_service_url = "http://127.0.0.1:8001/api/v1/translate/languages"
+translate_service_url = "http://127.0.0.1:8001/api/v1/translate/"
 r = httpx.get(translate_url)
 response = r.json()
 print(response)

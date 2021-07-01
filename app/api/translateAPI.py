@@ -449,7 +449,7 @@ async def translate_batch(request: BatchTranslationRequest):
     response = BatchTranslationResponse(translation=translated_batch)
     return response
 
-@translate.get('/languages', status_code=200)
+@translate.get('/', status_code=200)
 async def languages():
     languages_list = {}
     for model_id in loaded_models.keys():
