@@ -91,7 +91,9 @@ Do the following edits on docker-compose file
 
 ## Example calls
 
-### Translation
+### Simple translation
+
+Endpoint for translating a single phrase. 
 
 #### cURL
 
@@ -107,6 +109,29 @@ curl --location --request POST 'http://127.0.0.1:8001/api/v1/translate' \
 import httpx
 translate_service_url = "http://127.0.0.1:8001/api/v1/translate"
 json_data = {'src':'fr', 'tgt':'en', 'text':"c'est un test."}
+r = httpx.post(translate_service_url, json=json_data)
+response = r.json()
+print("Translation:", response['translation'])
+```
+
+### Batch translation
+
+Endpoint for translating a list of sentences.
+
+#### cURL
+
+```
+curl --location --request POST 'http://127.0.0.1:8001/api/v1/translate' \
+--header 'Content-Type: application/json' \
+--data-raw '{"src":"en", "tgt":"fr", "batch":["hello twb", "this is another sentence"]}'
+```
+
+#### Python
+
+```
+import httpx
+translate_service_url = "http://127.0.0.1:8001/api/v1/translate"
+json_data = {'src':'fr', 'tgt':'en', 'batch':["hello twb", "this is another sentence"]}
 r = httpx.post(translate_service_url, json=json_data)
 response = r.json()
 print("Translation:", response['translation'])
