@@ -139,16 +139,18 @@ print("Translation:", response['translation'])
 
 ### Retrieve languages
 
+Retrieves a the list of supported languages and model pairs.
+
 #### cURL
 
 ```
-curl 'http://127.0.0.1:8001/api/v1/translate/languages'
+curl 'http://127.0.0.1:8001/api/v1/translate/'
 ```
 
 #### Python
 ```
 import httpx
-translate_service_url = "http://127.0.0.1:8001/api/v1/translate/languages"
+translate_service_url = "http://127.0.0.1:8001/api/v1/translate/"
 r = httpx.get(translate_url)
 response = r.json()
 print(response)
