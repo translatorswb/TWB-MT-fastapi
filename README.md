@@ -121,17 +121,17 @@ Endpoint for translating a list of sentences.
 #### cURL
 
 ```
-curl --location --request POST 'http://127.0.0.1:8001/api/v1/translate' \
+curl --location --request POST 'http://127.0.0.1:8001/api/v1/translate/batch' \
 --header 'Content-Type: application/json' \
---data-raw '{"src":"en", "tgt":"fr", "batch":["hello twb", "this is another sentence"]}'
+--data-raw '{"src":"en", "tgt":"fr", "texts":["hello twb", "this is another sentence"]}'
 ```
 
 #### Python
 
 ```
 import httpx
-translate_service_url = "http://127.0.0.1:8001/api/v1/translate"
-json_data = {'src':'fr', 'tgt':'en', 'batch':["hello twb", "this is another sentence"]}
+translate_service_url = "http://127.0.0.1:8001/api/v1/translate/batch"
+json_data = {'src':'fr', 'tgt':'en', 'texts':["hello twb", "this is another sentence"]}
 r = httpx.post(translate_service_url, json=json_data)
 response = r.json()
 print("Translation:", response['translation'])
