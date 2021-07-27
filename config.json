@@ -16,7 +16,7 @@
             "src": "fr",
             "tgt": "en",
             "model_type": "opus",
-            "load": true,
+            "load": false,
             "sentence_split": "nltk",
             "pipeline": {
                 "lowercase": true,
@@ -28,7 +28,7 @@
             "src": "en",
             "tgt": "fr",
             "model_type": "opus",
-            "load": true,
+            "load": false,
             "sentence_split": "nltk",
             "pipeline": {
                 "lowercase": true,
@@ -40,7 +40,7 @@
             "src": "ha",
             "tgt": "en",
             "model_type": "opus",
-            "load": true,
+            "load": false,
             "sentence_split": "nltk" ,
             "pipeline": {
                 "lowercase": true,
@@ -52,6 +52,7 @@
             "src": "en",
             "tgt": "ha",
             "model_type": "opus",
+<<<<<<< HEAD
             "load": true,
             "sentence_split": "nltk" ,
             "pipeline": {
@@ -67,11 +68,12 @@
             "model_type": "ctranslator2",
             "model_path": "fren_argos",
             "sentencepiece_model": "sentencepiece.model",
+=======
+>>>>>>> 6ef511e0ed4571e288af0e1ab2e2980ac46918c8
             "load": false,
-            "sentence_split": "nltk",
+            "sentence_split": "nltk" ,
             "pipeline": {
                 "lowercase": true,
-                "sentencepiece": true,
                 "translate": true,
                 "recase": true
             }
@@ -155,6 +157,38 @@
                             "translate": true,
                             "recase": true
                     }
+        },
+        {
+            "src": "en",
+            "tgt": "ha",
+            "model_type": "ctranslator2",
+            "model_path": "enha",
+            "sentencepiece_model": "en.model",
+            "load": true,
+            "sentence_split": "nltk",
+            "pipeline": {
+                "lowercase": true,
+                "tokenize": false,
+                "sentencepiece": true,
+                "translate": true,
+                "recase": true
+            }
+        },
+        {
+            "src": "ha",
+            "tgt": "en",
+            "model_type": "ctranslator2",
+            "model_path": "haen",
+            "sentencepiece_model": "ha.model",
+            "load": true,
+            "sentence_split": "nltk",
+            "pipeline": {
+                "lowercase": true,
+                "tokenize": false,
+                "sentencepiece": true,
+                "translate": true,
+                "recase": true
+            }
         }
     ]
 }
