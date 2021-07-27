@@ -328,11 +328,11 @@ def load_models(config_path):
                     print("\nWARNING: Failed to load sentencepiece model for %s: model_path not specified. Skipping load."%(model_id))
                     continue
 
-                if not 'sentencepiece_model' in model_config:
-                    print("\nWARNING: Failed to load sentencepiece model for %s: sentencepiece_model not specified. Skipping load."%(model_id))
+                if not 'src_sentencepiece_model' in model_config:
+                    print("\nWARNING: Failed to load sentencepiece model for %s: src_sentencepiece_model not specified. Skipping load."%(model_id))
                     continue
 
-                model_file = os.path.join(model_dir, model_config['sentencepiece_model'])
+                model_file = os.path.join(model_dir, model_config['src_sentencepiece_model'])
                 if not os.path.exists(model_file):
                     print("\nWARNING: Failed to load sentencepiece model for %s: Sentencepiece model file not found at %s. Skipping load."%(model_id, model_file))
                     continue
@@ -372,7 +372,12 @@ def load_models(config_path):
                 model['postprocessors'].append(desegmenter)
                 print("unbpe", end=" ")
             elif sentencepiece_ok:
-                model_file = os.path.join(model_dir, model_config['sentencepiece_model'])
+                if not 'tgt_sentencepiece_model' in model_config:
+                    print("\nWARNING: Failed to load sentencepiece model for %s: tgt_sentencepiece_model not specified. Skipping load."%(model_id))
+                    continue
+
+                model_file = os.path.join(model_dir, model_config['tgt_sentencepiece_model'])
+                
                 model['postprocessors'].append(get_sentencepiece_desegmenter(model_file))
                 print("desentencepiece", end=" ")
             elif model_config['model_type'] == 'ctranslator2':

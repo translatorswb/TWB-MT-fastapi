@@ -145,7 +145,8 @@
             "tgt": "ha",
             "model_type": "ctranslator2",
             "model_path": "enha",
-            "sentencepiece_model": "en.model",
+            "src_sentencepiece_model": "en.model",
+            "tgt_sentencepiece_model": "ha.model",
             "load": true,
             "sentence_split": "nltk",
             "pipeline": {
@@ -161,7 +162,8 @@
             "tgt": "en",
             "model_type": "ctranslator2",
             "model_path": "haen",
-            "sentencepiece_model": "ha.model",
+            "src_sentencepiece_model": "en.model",
+            "tgt_sentencepiece_model": "ha.model",
             "load": true,
             "sentence_split": "nltk",
             "pipeline": {
