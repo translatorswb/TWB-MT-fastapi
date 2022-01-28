@@ -66,8 +66,11 @@ def get_batch_ctranslator(ctranslator_model_path):
     translator = lambda x: [s[0]['tokens'] for s in ctranslator.translate_batch(x)] 
     return translator
 
-def get_batch_opustranslator(src: str, tgt: str) -> Optional[Callable[str]]:
+def get_batch_opustranslator(
+    src: str, tgt: str
+) -> Optional[Callable[[str], str]]:
     from transformers import MarianTokenizer, MarianMTModel
+
     model_name = f'opus-mt-{src}-{tgt}'
     local_model = os.path.join(MODELS_ROOT_DIR, model_name)
     remote_model = f'{HELSINKI_NLP}/{model_name}'
