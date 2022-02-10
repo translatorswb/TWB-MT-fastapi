@@ -16,7 +16,7 @@
             "src": "fr",
             "tgt": "en",
             "model_type": "opus",
-            "load": false,
+            "load": true,
             "sentence_split": "nltk",
             "pipeline": {
                 "lowercase": true,
@@ -28,7 +28,7 @@
             "src": "en",
             "tgt": "fr",
             "model_type": "opus",
-            "load": false,
+            "load": true,
             "sentence_split": "nltk",
             "pipeline": {
                 "lowercase": true,
