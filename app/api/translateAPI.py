@@ -97,9 +97,9 @@ def get_batch_opustranslator(
         is_tokenizer_loaded = True
 
     try:
-        model = AutoModelForSeq2SeqLMl.from_pretrained(local_model)
+        model = AutoModelForSeq2SeqLM.from_pretrained(local_model)
     except OSError:
-        model = AutoModelForSeq2SeqLMl.from_pretrained(remote_model)
+        model = AutoModelForSeq2SeqLM.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:
         is_model_loaded = True
