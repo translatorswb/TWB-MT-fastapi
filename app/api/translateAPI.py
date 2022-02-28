@@ -69,7 +69,7 @@ def get_batch_ctranslator(ctranslator_model_path):
 def get_batch_opustranslator(
     src: str, tgt: str
 ) -> Optional[Callable[[str], str]]:
-    from transformers import MarianTokenizer, MarianMTModel
+    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
     model_name = f'opus-mt-{src}-{tgt}'
     local_model = os.path.join(MODELS_ROOT_DIR, model_name)
@@ -89,17 +89,17 @@ def get_batch_opustranslator(
         )
 
     try:
-        tokenizer = MarianTokenizer.from_pretrained(local_model)
+        tokenizer = AutoTokenizer.from_pretrained(local_model)
     except OSError:
-        tokenizer = MarianTokenizer.from_pretrained(remote_model)
+        tokenizer = AutoTokenizer.from_pretrained(remote_model)
         tokenizer.save_pretrained(local_model)
     finally:
         is_tokenizer_loaded = True
 
     try:
-        model = MarianMTModel.from_pretrained(local_model)
+        model = AutoModelForSeq2SeqLMl.from_pretrained(local_model)
     except OSError:
-        model = MarianMTModel.from_pretrained(remote_model)
+        model = AutoModelForSeq2SeqLMl.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:
         is_model_loaded = True
@@ -429,6 +429,15 @@ def load_models(config_path):
         
     return 1
 
+def map_lang_to_closest(lang):
+    global language_codes
+    if lang in language_codes:
+        return lang
+    elif '_' in lang:
+        superlang = lang.split('_')[0]
+        if superlang in language_codes:
+            return superlang
+    return ''
     
 #HTTP operations
 class TranslationRequest(BaseModel):
@@ -456,7 +465,7 @@ class LanguagesResponse(BaseModel):
 @translate.post('/', status_code=200)
 async def translate_sentence(request: TranslationRequest):
 
-    model_id = get_model_id(request.src, request.tgt, request.alt)
+    model_id = get_model_id(map_lang_to_closest(request.src), map_lang_to_closest(request.tgt), request.alt)
 
     if not model_id in loaded_models:
         raise HTTPException(status_code=404, detail="Language pair %s is not supported."%model_id)
@@ -471,7 +480,7 @@ async def translate_batch(request: BatchTranslationRequest):
     print(request.texts)
     print(type(request.texts))
 
-    model_id = get_model_id(request.src, request.tgt, request.alt)
+    model_id = get_model_id(map_lang_to_closest(request.src), map_lang_to_closest(request.tgt), request.alt)
 
     if not model_id in loaded_models:
         raise HTTPException(status_code=404, detail="Language pair %s is not supported."%model_id)
