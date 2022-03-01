@@ -10,6 +10,7 @@ services:
     ports:
       - 8001:8000
     volumes:
+      - .:/app
       - ../translation-models:/app/models
     environment:
       - MT_API_CONFIG=/app/config.json

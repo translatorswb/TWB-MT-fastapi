@@ -18,7 +18,7 @@ from app.constants import (
     SUPPORTED_MODEL_TYPES,
 )
 
-translate = APIRouter()
+translate = APIRouter(prefix='/api/v1/translate')
 
 #models and data
 loaded_models = {}
@@ -507,10 +507,3 @@ async def languages():
         languages_list[source][target].append(model_id)
 
     return LanguagesResponse(languages=language_codes, models=languages_list)
-
-
-@translate.on_event("startup")
-async def startup_event():
-    load_models(CONFIG_JSON_PATH)
-
-
