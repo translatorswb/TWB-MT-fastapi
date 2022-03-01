@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.api.translateAPI import load_models
+from app.helpers.config import Config
 from app.constants import CONFIG_JSON_PATH
 
 def create_app():
@@ -11,6 +11,6 @@ def create_app():
 
     @app.on_event('startup')
     async def startup_event():
-        load_models(CONFIG_JSON_PATH)
+        config = Config()
 
     return app
