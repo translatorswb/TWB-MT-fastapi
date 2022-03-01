@@ -7,15 +7,16 @@ from fastapi import Header, APIRouter, HTTPException
 from nltk.tokenize import sent_tokenize, word_tokenize
 from pydantic import BaseModel
 
-#constants
-CONFIG_JSON_PATH = os.getenv('MT_API_CONFIG')
-MODELS_ROOT_DIR = os.getenv('MODELS_ROOT')
-CTRANSLATE_DEVICE = 'cuda' if os.getenv('MT_API_DEVICE')=='gpu' else 'cpu'
-CTRANSLATE_INTER_THREADS = int(os.getenv('MT_API_THREADS') or '16')
-MOSES_TOKENIZER_DEFAULT_LANG = 'en'
-HELSINKI_NLP = 'Helsinki-NLP'
-SUPPORTED_MODEL_TYPES = ['opus', 'ctranslator2', 'dummy']
-MODEL_TAG_SEPARATOR = "-"
+from app.constants import (
+    CONFIG_JSON_PATH,
+    CTRANSLATE_DEVICE,
+    CTRANSLATE_INTER_THREADS,
+    HELSINKI_NLP,
+    MODELS_ROOT_DIR,
+    MODEL_TAG_SEPARATOR,
+    MOSES_TOKENIZER_DEFAULT_LANG,
+    SUPPORTED_MODEL_TYPES,
+)
 
 translate = APIRouter()
 
