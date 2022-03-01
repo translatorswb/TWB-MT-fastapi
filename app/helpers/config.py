@@ -40,6 +40,15 @@ class Config(metaclass=Singleton):
         self.language_codes = {}
         self.load_models()
 
+    def map_lang_to_closest(self, lang):
+        if lang in self.language_codes:
+            return lang
+        elif '_' in lang:
+            superlang = lang.split('_')[0]
+            if superlang in self.language_codes:
+                return superlang
+        return ''
+
     def load_models(self):
         # Check if config file is there and well formatted
         if not os.path.exists(CONFIG_JSON_PATH):
