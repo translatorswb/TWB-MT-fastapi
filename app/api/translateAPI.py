@@ -17,6 +17,32 @@ from app.constants import (
     MOSES_TOKENIZER_DEFAULT_LANG,
     SUPPORTED_MODEL_TYPES,
 )
+from app.utils.translators import (
+    get_batch_ctranslator,
+    get_batch_opustranslator,
+    get_ctranslator,
+    dummy_translator,
+)
+from app.utils.segmenters import (
+    desegmenter,
+    nltk_sentence_segmenter,
+    token_desegmenter,
+    token_segmenter,
+    get_bpe_segmenter,
+    get_sentencepiece_segmenter,
+    get_sentencepiece_desegmenter,
+)
+from app.utils.utils import (
+    capitalizer,
+    get_model_id,
+    lowercaser,
+    parse_model_id,
+)
+from app.utils.tokenizers import (
+    get_custom_tokenizer,
+    get_moses_detokenizer,
+    get_moses_tokenizer,
+)
 
 translate = APIRouter(prefix='/api/v1/translate')
 
@@ -25,144 +51,17 @@ loaded_models = {}
 config_data = {}
 language_codes = {}
 
-#processors
-nltk_sentence_segmenter = lambda x : sent_tokenize(x)   #string IN -> list OUT
-lowercaser =  lambda x: x.lower() #string IN -> string OUT
-desegmenter = lambda x: re.sub('(@@ )|(@@ ?$)', '', ' '.join(x)) #list IN -> string OUT
-capitalizer = lambda x: x.capitalize() #string IN -> string OUT
-token_segmenter = lambda x: x.strip().split()  #string IN -> list OUT
-token_desegmenter = lambda x: ' '.join(x) #list IN -> string OUT
-dummy_translator = lambda x: x
 
-#MT operations
-def get_model_id(src, tgt, alt_id=None):
-    model_id = src + MODEL_TAG_SEPARATOR + tgt
-    if alt_id:
-        model_id += MODEL_TAG_SEPARATOR + alt_id
-    return model_id
+def map_lang_to_closest(lang):
+    global language_codes
+    if lang in language_codes:
+        return lang
+    elif '_' in lang:
+        superlang = lang.split('_')[0]
+        if superlang in language_codes:
+            return superlang
+    return ''
 
-def parse_model_id(model_id):
-    fields = model_id.split(MODEL_TAG_SEPARATOR)
-    if len(fields) == 2:
-        alt=""
-    elif len(fields) == 3:
-        alt = fields[2]
-    else:
-        return False
-
-    src = fields[0]
-    tgt = fields[1]
-
-    return src, tgt, alt
-
-def get_ctranslator(ctranslator_model_path):
-    from ctranslate2 import Translator
-    ctranslator = Translator(ctranslator_model_path)
-    translator = lambda x: ctranslator.translate_batch([x])[0][0]['tokens']  #list IN -> list OUT
-    return translator
-
-def get_batch_ctranslator(ctranslator_model_path): 
-    from ctranslate2 import Translator
-    ctranslator = Translator(ctranslator_model_path, device=CTRANSLATE_DEVICE, inter_threads=CTRANSLATE_INTER_THREADS)
-    translator = lambda x: [s[0]['tokens'] for s in ctranslator.translate_batch(x)] 
-    return translator
-
-def get_batch_opustranslator(
-    src: str, tgt: str
-) -> Optional[Callable[[str], str]]:
-    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-
-    model_name = f'opus-mt-{src}-{tgt}'
-    local_model = os.path.join(MODELS_ROOT_DIR, model_name)
-    remote_model = f'{HELSINKI_NLP}/{model_name}'
-    is_model_loaded, is_tokenizer_loaded = False, False
-
-    def translator(src_texts):
-        if not src_texts:
-            return ''
-        return tokenizer.batch_decode(
-            model.generate(
-                **tokenizer.prepare_seq2seq_batch(
-                    src_texts=src_texts, return_tensors="pt"
-                )
-            ),
-            skip_special_tokens=True,
-        )
-
-    try:
-        tokenizer = AutoTokenizer.from_pretrained(local_model)
-    except OSError:
-        tokenizer = AutoTokenizer.from_pretrained(remote_model)
-        tokenizer.save_pretrained(local_model)
-    finally:
-        is_tokenizer_loaded = True
-
-    try:
-        model = AutoModelForSeq2SeqLM.from_pretrained(local_model)
-    except OSError:
-        model = AutoModelForSeq2SeqLM.from_pretrained(remote_model)
-        model.save_pretrained(local_model)
-    finally:
-        is_model_loaded = True
-
-    if is_tokenizer_loaded and is_model_loaded:
-        return translator
-
-def get_moses_tokenizer(lang):
-    from sacremoses import MosesTokenizer
-    moses_tokenizer = MosesTokenizer(lang=lang)
-    tokenizer = lambda x: moses_tokenizer.tokenize(x, return_str=True) #string IN -> string OUT
-    return tokenizer
-
-def get_moses_detokenizer(lang):
-    from sacremoses import  MosesDetokenizer
-    moses_detokenizer = MosesDetokenizer(lang=lang)
-    tokenizer = lambda x: moses_detokenizer.detokenize(x.split(), return_str=True) #string IN -> string OUT
-    return tokenizer
-
-def get_bpe_segmenter(bpe_codes_path):
-    from subword_nmt import apply_bpe
-    try:
-        bpe = apply_bpe.BPE(codes=open(bpe_codes_path, 'r'))
-        segmenter = lambda x: bpe.process_line(x.strip()).split() #string IN -> list OUT
-        return segmenter
-    except Exception as e:
-        return None
-
-def get_sentencepiece_segmenter(sp_model_path):
-    import sentencepiece as spm
-    sp = spm.SentencePieceProcessor()
-    sp.load(sp_model_path)
-    segmenter = lambda x: sp.encode_as_pieces(x) #string IN -> list OUT
-    return segmenter
-
-def get_sentencepiece_desegmenter(sp_model_path):
-    import sentencepiece as spm
-    sp = spm.SentencePieceProcessor()
-    sp.load(sp_model_path)
-    desentencepiece = lambda x: sp.decode_pieces(x) # list IN -> string OUT
-    return desentencepiece
-
-def tokenize_with_punkset(doc, punkset):
-    tokens = []
-    doc = ' '.join(doc.split())
-
-    curr_sent = ""
-    for c in doc:
-        if c in punkset:
-            curr_sent += c
-            if curr_sent:
-                tokens.append(curr_sent.strip())
-                curr_sent = ""
-        else:
-            curr_sent += c
-    if curr_sent:
-        tokens.append(curr_sent.strip())            
-
-    return tokens
-
-def get_custom_tokenizer(punkset):
-    return lambda x: tokenize_with_punkset(x, punkset)
 
 def do_translate(model_id, text):
     # print("do_translate")
@@ -430,15 +329,6 @@ def load_models(config_path):
         
     return 1
 
-def map_lang_to_closest(lang):
-    global language_codes
-    if lang in language_codes:
-        return lang
-    elif '_' in lang:
-        superlang = lang.split('_')[0]
-        if superlang in language_codes:
-            return superlang
-    return ''
     
 #HTTP operations
 class TranslationRequest(BaseModel):
