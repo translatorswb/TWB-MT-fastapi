@@ -9,6 +9,8 @@ services:
     # runtime: nvidia  # Comment out in local
     ports:
       - 8001:8000
+    volumes:
+      - ../translation-models:/app/models
     environment:
       - MT_API_CONFIG=/app/config.json
       - MT_API_DEVICE=cpu #or gpu, if so make runtime:nvidia
