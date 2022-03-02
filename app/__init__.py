@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 
 from app.helpers.config import Config
-from app.constants import CONFIG_JSON_PATH
 
 def create_app():
     app = FastAPI()
