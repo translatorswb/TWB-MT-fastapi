@@ -16,7 +16,7 @@ class TestTranslateApiV1(BaseTestCase):
         assert content['models'] == self.config.languages_list
         assert content['languages'] == self.config.language_codes
 
-    def test_translate_text(self):
+    def test_translate_text_valid_code(self):
         options = {
             'src': 'en',
             'tgt': 'fr',
@@ -30,7 +30,18 @@ class TestTranslateApiV1(BaseTestCase):
         content = response.json()
         assert content['translation'] == expected_translation
 
-    def test_batch_translate_text(self):
+    def test_translate_text_invalid_code(self):
+        options = {
+            'src': 'en',
+            'tgt': 'xyz',
+            'text': 'Hello there, how are you doing?',
+        }
+        response = self.client.post(
+            self.get_endpoint('/'), data=json.dumps(options)
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_batch_translate_text_valid_code(self):
         options = {
             'src': 'en',
             'tgt': 'fr',
@@ -47,3 +58,14 @@ class TestTranslateApiV1(BaseTestCase):
 
         content = response.json()
         assert content['translation'] == expected_translations
+
+    def test_batch_translate_text_invalid_code(self):
+        options = {
+            'src': 'en',
+            'tgt': 'xyz',
+            'texts': ['Hello, what is your name?', 'How are you doing?'],
+        }
+        response = self.client.post(
+            url=self.get_endpoint('/batch'), data=json.dumps(options)
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
