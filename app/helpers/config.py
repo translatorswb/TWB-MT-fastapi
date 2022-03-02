@@ -30,6 +30,7 @@ from app.utils.utils import (
     capitalizer,
     get_model_id,
     lowercaser,
+    parse_model_id,
 )
 
 
@@ -38,9 +39,30 @@ class Config(metaclass=Singleton):
         self.loaded_models = {}
         self.config_data = {}
         self.language_codes = {}
-        self.load_models()
+        self.languages_list = {}
+        self._load_models()
+        self._load_languages_list()
 
-    def load_models(self):
+    def map_lang_to_closest(self, lang):
+        if lang in self.language_codes:
+            return lang
+        elif '_' in lang:
+            superlang = lang.split('_')[0]
+            if superlang in self.language_codes:
+                return superlang
+        return ''
+
+    def _load_languages_list(self):
+        for model_id in self.loaded_models.keys():
+            source, target, alt = parse_model_id(model_id)
+            if not source in self.languages_list:
+                self.languages_list[source] = {}
+            if not target in self.languages_list[source]:
+                self.languages_list[source][target] = []
+
+            self.languages_list[source][target].append(model_id)
+
+    def _load_models(self):
         # Check if config file is there and well formatted
         if not os.path.exists(CONFIG_JSON_PATH):
             print(
