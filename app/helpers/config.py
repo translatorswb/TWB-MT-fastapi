@@ -228,7 +228,7 @@ class Config(metaclass=Singleton):
                 )
 
             # Load model pipeline
-            pipeline_msg = [f'Model: {model_id} (']
+            pipeline_msg = []
 
             # Load sentence segmenter
             if 'sentence_split' in model_config:
@@ -409,9 +409,7 @@ class Config(metaclass=Singleton):
                 model['postprocessors'].append(capitalizer)
                 pipeline_msg.append('recase')
 
-            pipeline_msg.append(')')
-
-            self._log_info(' '.join(pipeline_msg))
+            self._log_info(f"Model: {model_id} ( {' '.join(pipeline_msg)} )")
 
             # All good, add model to the list
             self.loaded_models[model_id] = model
