@@ -53,7 +53,7 @@ def get_batch_opustranslator(
         return tokenizer.batch_decode(
             model.generate(
                 **tokenizer.prepare_seq2seq_batch(
-                    src_texts=src_texts, return_tensors="pt"
+                    src_texts=src_texts, return_tensors='pt'
                 )
             ),
             skip_special_tokens=True,

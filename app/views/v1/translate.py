@@ -30,7 +30,7 @@ async def translate_sentence(request: TranslationRequest):
     if not model_id in config.loaded_models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Language pair %s is not supported." % model_id,
+            detail=f'Language pair {model_id} is not supported.'
         )
 
     translation = translate_text(model_id, request.text)
@@ -49,7 +49,7 @@ async def translate_batch(request: BatchTranslationRequest):
     if not model_id in config.loaded_models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Language pair %s is not supported." % model_id,
+            detail=f'Language pair {model_id} is not supported.'
         )
 
     translated_batch = []

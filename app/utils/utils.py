@@ -19,7 +19,7 @@ def get_model_id(src, tgt, alt_id=None):
 def parse_model_id(model_id):
     fields = model_id.split(MODEL_TAG_SEPARATOR)
     if len(fields) == 2:
-        alt = ""
+        alt = ''
     elif len(fields) == 3:
         alt = fields[2]
     else:

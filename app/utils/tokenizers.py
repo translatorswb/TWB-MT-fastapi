@@ -22,13 +22,13 @@ def tokenize_with_punkset(doc, punkset):
     tokens = []
     doc = ' '.join(doc.split())
 
-    curr_sent = ""
+    curr_sent = ''
     for c in doc:
         if c in punkset:
             curr_sent += c
             if curr_sent:
                 tokens.append(curr_sent.strip())
-                curr_sent = ""
+                curr_sent = ''
         else:
             curr_sent += c
     if curr_sent:
