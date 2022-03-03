@@ -1,0 +1,32 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  standard:
+    format: "[ %(asctime)s ] %(levelname)s:  %(message)s"
+  simple:
+    format: "%(levelname)s:  %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: standard
+    stream: ext://sys.stdout
+  simple:
+    class: logging.StreamHandler
+    formatter: simple
+    stream: ext://sys.stdout
+
+loggers:
+  console_logger:
+    handlers: [simple]
+    level: DEBUG
+    propagate: false
+  uvicorn:
+    error:
+      propagate: true
+
+root:
+  level: INFO
+  handlers: [console]
+  propagate: no

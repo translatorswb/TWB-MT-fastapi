@@ -12,7 +12,7 @@ from app.models.translate import (
     TranslationResponse,
 )
 from app.utils.translate import translate_text
-from app.utils.log import logging
+
 
 translate = APIRouter(prefix='/api/v1/translate')
 config = Config()
