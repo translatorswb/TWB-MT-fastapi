@@ -1,10 +1,10 @@
 import os
 from typing import List, Optional, Dict, Callable
 
-from app.constants import (
+from app.constants import HELSINKI_NLP
+from app.settings import (
     CTRANSLATE_DEVICE,
     CTRANSLATE_INTER_THREADS,
-    HELSINKI_NLP,
     MODELS_ROOT_DIR,
 )
 

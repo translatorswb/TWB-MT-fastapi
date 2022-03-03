@@ -2,11 +2,7 @@ import json
 import logging
 import os
 
-from app.constants import (
-    CONFIG_JSON_PATH,
-    MODELS_ROOT_DIR,
-    SUPPORTED_MODEL_TYPES,
-)
+from app.constants import SUPPORTED_MODEL_TYPES
 from app.helpers.singleton import Singleton
 from app.utils.segmenters import (
     desegmenter,
@@ -16,6 +12,10 @@ from app.utils.segmenters import (
     nltk_sentence_segmenter,
     token_desegmenter,
     token_segmenter,
+)
+from app.settings import (
+    CONFIG_JSON_PATH,
+    MODELS_ROOT_DIR,
 )
 from app.utils.tokenizers import (
     get_custom_tokenizer,
@@ -42,11 +42,15 @@ class ConfigurationException(Exception):
 
 
 class Config(metaclass=Singleton):
-    def __init__(self):
+    def __init__(self, config_file=None, config_data=None):
         self.loaded_models = {}
-        self.config_data = {}
         self.language_codes = {}
         self.languages_list = {}
+        self.config_data = config_data or {}
+        self.config_file = config_file or CONFIG_JSON_PATH
+
+        self.warnings = []
+        self.messages = []
 
         self._validate()
         self._load_models()
@@ -61,6 +65,14 @@ class Config(metaclass=Singleton):
                 return superlang
         return ''
 
+    def _log_warning(self, msg):
+        logger.warning(msg)
+        self.warnings.append(msg)
+
+    def _log_info(self, msg):
+        logger.info(msg)
+        self.messages.append(msg)
+
     def _load_languages_list(self):
         for model_id in self.loaded_models.keys():
             source, target, alt = parse_model_id(model_id)
@@ -72,14 +84,17 @@ class Config(metaclass=Singleton):
             self.languages_list[source][target].append(model_id)
 
     def _validate_config_file(self):
-        if not os.path.exists(CONFIG_JSON_PATH):
-            logger.warning(
-                f'Config file {CONFIG_JSON_PATH} not found. '
+        if self.config_data:
+            return
+
+        if not os.path.exists(self.config_file):
+            self._log_warning(
+                f'Config file {self.config_file} not found. '
                 'No models will be loaded.'
             )
         else:
             try:
-                with open(CONFIG_JSON_PATH, 'r') as jsonfile:
+                with open(self.config_file, 'r') as jsonfile:
                     self.config_data = json.load(jsonfile)
             except json.decoder.JSONDecodeError:
                 msg = 'Config file format broken. No models will be loaded.'
@@ -93,7 +108,9 @@ class Config(metaclass=Singleton):
             raise ConfigurationException(msg)
 
         if not 'models' in self.config_data:
-            msg = "Model spefication list ('models') not found in configuration."
+            msg = (
+                "Model spefication list ('models') not found in configuration."
+            )
             logger.error(msg)
             raise ConfigurationException(msg)
 
@@ -102,7 +119,7 @@ class Config(metaclass=Singleton):
             self.language_codes = self.config_data['languages']
             logger.debug(f'Languages: {self.language_codes}')
         else:
-            logger.warning(
+            self._log_warning(
                 "Language name spefication dictionary ('languages') not found in configuration."
             )
 
@@ -119,7 +136,7 @@ class Config(metaclass=Singleton):
         # Check if model_type src and tgt fields are specified
         for item in ['src', 'tgt', 'model_type']:
             if item not in model_config:
-                logger.warning(
+                self._log_warning(
                     f'`{item}` not speficied for a model. Skipping load'
                 )
                 return False
@@ -127,7 +144,7 @@ class Config(metaclass=Singleton):
 
     def _is_valid_model_type(self, model_type):
         if not model_type in SUPPORTED_MODEL_TYPES:
-            logger.warning(
+            self._log_warning(
                 f'`model_type` not recognized: {model_type}. Skipping load'
             )
             return False
@@ -135,12 +152,12 @@ class Config(metaclass=Singleton):
 
     def _validate_src_tgt(self, src, tgt):
         if not src in self.language_codes:
-            logger.warning(
+            self._log_warning(
                 f'Source language code `{src}` not defined in '
                 'languages dict. This will surely break something.'
             )
         if not tgt in self.language_codes:
-            logger.warning(
+            self._log_warning(
                 f'Target language code `{tgt}` not defined in '
                 'languages dict. This will surely break something.'
             )
@@ -155,12 +172,12 @@ class Config(metaclass=Singleton):
             )
             if not os.path.exists(model_dir):
                 model_dir = None
-                logger.warning(
+                self._log_warning(
                     f'Model path {model_dir} not found for model {model_id}. '
                     "Can't load custom translation model or segmenters."
                 )
         else:
-            logger.warning(
+            self._log_warning(
                 f'Model path not specified for model {model_id}. '
                 "Can't load custom translation model or segmenters."
             )
@@ -199,13 +216,13 @@ class Config(metaclass=Singleton):
                 'bpe' in model_config['pipeline']
                 and 'sentencepiece' in model_config['pipeline']
             ):
-                logger.warning(
+                self._log_warning(
                     f'Model {model_id} has both sentencepiece and bpe setup. '
                 )
 
             # Check conflicting model ids
             if model_id in self.loaded_models:
-                logger.warning(
+                self._log_warning(
                     f'Overwriting model {model_id} since there are duplicate entries. '
                     "Make sure you give an 'alt' id to load alternate models."
                 )
@@ -255,7 +272,7 @@ class Config(metaclass=Singleton):
                 and model_config['pipeline']['bpe']
             ):
                 if not 'bpe_file' in model_config:
-                    logger.warning(
+                    self._log_warning(
                         f'Failed to load bpe model for {model_id}: '
                         'bpe_file not specified. Skipping load.'
                     )
@@ -264,7 +281,7 @@ class Config(metaclass=Singleton):
                 model_file = os.path.join(model_dir, model_config['bpe_file'])
 
                 if not os.path.exists(model_file):
-                    logger.warning(
+                    self._log_warning(
                         f'Failed to load bpe model for {model_id}: '
                         f'BPE vocabulary file not found at {model_file}. Skipping load.'
                     )
@@ -273,7 +290,7 @@ class Config(metaclass=Singleton):
                 bpe_segmenter = get_bpe_segmenter(model_file)
 
                 if not bpe_segmenter:
-                    logger.warning(
+                    self._log_warning(
                         f'Failed to loading bpe model {model_file} for {model_id}. Skipping load.'
                     )
                     continue
@@ -287,14 +304,14 @@ class Config(metaclass=Singleton):
                 and model_config['pipeline']['sentencepiece']
             ):
                 if not model_dir:
-                    logger.warning(
+                    self._log_warning(
                         f'Failed to load sentencepiece model for {model_id}: '
                         'model_path not specified. Skipping load.'
                     )
                     continue
 
                 if not 'src_sentencepiece_model' in model_config:
-                    logger.warning(
+                    self._log_warning(
                         f'Failed to load sentencepiece model for {model_id}: '
                         'src_sentencepiece_model not specified. Skipping load.'
                     )
@@ -304,7 +321,7 @@ class Config(metaclass=Singleton):
                     model_dir, model_config['src_sentencepiece_model']
                 )
                 if not os.path.exists(model_file):
-                    logger.warning(
+                    self._log_warning(
                         f'Failed to load sentencepiece model for {model_id}: '
                         f'Sentencepiece model file not found at {model_file}. Skipping load.'
                     )
@@ -323,17 +340,17 @@ class Config(metaclass=Singleton):
                 'translate' in model_config['pipeline']
                 and model_config['pipeline']['translate']
             ):
-                pipeline_msg.append('translate')
+                msg = 'translate'
                 if model_config['model_type'] == 'ctranslator2':
                     if not model_dir:
-                        logger.warning(
+                        self._log_warning(
                             f'Failed to load ctranslate model for {model_id}: '
                             'model_path not specified. Skipping load.'
                         )
                         continue
 
                     model['translator'] = get_batch_ctranslator(model_dir)
-                    pipeline_msg.append('-ctranslator2')
+                    msg += '-ctranslator2'
                 elif model_config['model_type'] == 'opus':
                     opus_translator = get_batch_opustranslator(
                         model['src'], model['tgt']
@@ -342,15 +359,16 @@ class Config(metaclass=Singleton):
                         model['translator'] = get_batch_opustranslator(
                             model['src'], model['tgt']
                         )
-                        pipeline_msg.append('-opus-huggingface')
+                        msg += '-opus-huggingface'
                     else:
-                        logger.warning(
+                        self._log_warning(
                             f'Failed to load opus-huggingface model for {model_id}. Skipping load.'
                         )
                         continue
                 elif model_config['model_type'] == 'dummy':
-                    pipeline_msg.append('-dummy')
+                    msg += '-dummy'
                     model['translator'] = dummy_translator
+                pipeline_msg.append(msg)
             else:
                 model['translator'] = None
 
@@ -359,7 +377,7 @@ class Config(metaclass=Singleton):
                 pipeline_msg.append('unbpe')
             elif sentencepiece_ok:
                 if not 'tgt_sentencepiece_model' in model_config:
-                    logger.warning(
+                    self._log_warning(
                         f'Failed to load sentencepiece model for {model_id}: '
                         'tgt_sentencepiece_model not specified. Skipping load.'
                     )
@@ -393,7 +411,7 @@ class Config(metaclass=Singleton):
 
             pipeline_msg.append(')')
 
-            logger.info(' '.join(pipeline_msg))
+            self._log_info(' '.join(pipeline_msg))
 
             # All good, add model to the list
             self.loaded_models[model_id] = model
