@@ -4,7 +4,7 @@ from fastapi import Header, APIRouter, HTTPException, status
 
 from app.helpers.config import Config
 from app.utils.utils import get_model_id, parse_model_id
-from app.models.translate import (
+from app.models.v1.translate import (
     BatchTranslationRequest,
     BatchTranslationResponse,
     LanguagesResponse,
@@ -14,11 +14,11 @@ from app.models.translate import (
 from app.utils.translate import translate_text
 
 
-translate = APIRouter(prefix='/api/v1/translate')
+translate_v1 = APIRouter(prefix='/api/v1/translate')
 config = Config()
 
 
-@translate.post('/', status_code=status.HTTP_200_OK)
+@translate_v1.post('/', status_code=status.HTTP_200_OK)
 async def translate_sentence(request: TranslationRequest):
 
     model_id = get_model_id(
@@ -38,7 +38,7 @@ async def translate_sentence(request: TranslationRequest):
     return TranslationResponse(translation=translation)
 
 
-@translate.post('/batch', status_code=status.HTTP_200_OK)
+@translate_v1.post('/batch', status_code=status.HTTP_200_OK)
 async def translate_batch(request: BatchTranslationRequest):
     model_id = get_model_id(
         config.map_lang_to_closest(request.src),
@@ -60,7 +60,7 @@ async def translate_batch(request: BatchTranslationRequest):
     return BatchTranslationResponse(translation=translated_batch)
 
 
-@translate.get('/', status_code=status.HTTP_200_OK)
+@translate_v1.get('/', status_code=status.HTTP_200_OK)
 async def languages():
     return LanguagesResponse(
         languages=config.language_codes, models=config.languages_list
