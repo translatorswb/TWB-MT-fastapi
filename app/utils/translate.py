@@ -2,10 +2,10 @@ from typing import Optional
 
 from app.helpers.config import Config
 
-config = Config()
-
 
 def translate_text(model_id: str, text: str) -> Optional[str]:
+    config = Config()
+
     if not model_id in config.loaded_models:
         return None
 

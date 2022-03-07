@@ -1,15 +1,10 @@
-from fastapi.testclient import TestClient
-
-from main import app
 from app.helpers.config import Config
+from app.utils.translate import translate_text
+from app.utils.utils import get_model_id
 
 
-class BaseTestCase:
-    API_VERSION = 1
-    SERVICE = 'translate'
-
+class TestTranslations:
     def setup(self):
-        self.client = TestClient(app)
         self.config_data = {
             'languages': {
                 'en': 'English',
@@ -31,7 +26,10 @@ class BaseTestCase:
             ],
         }
         self.config = Config(config_data=self.config_data)
+        self.model_id = get_model_id('en', 'fr')
 
-    def get_endpoint(self, endpoint: str = '/') -> str:
-        endpoint = f'/{endpoint}' if not endpoint.startswith('/') else endpoint
-        return f'/api/v{self.API_VERSION}/{self.SERVICE}{endpoint}'
+    def test_translate_text_en_fr(self):
+        text = 'Hello there, how are you doing?'
+        expected_translation = 'Bonjour, comment allez-vous?'
+        translation = translate_text(self.model_id, text)
+        assert translation == expected_translation

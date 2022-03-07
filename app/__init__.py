@@ -10,6 +10,6 @@ def create_app():
 
     @app.on_event('startup')
     async def startup_event():
-        config = Config()
+        config = Config(load_all_models=True)
 
     return app

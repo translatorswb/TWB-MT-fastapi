@@ -15,13 +15,13 @@ from app.utils.translate import translate_text
 
 
 translate_v1 = APIRouter(prefix='/api/v1/translate')
-config = Config()
 
 
 @translate_v1.post('/', status_code=status.HTTP_200_OK)
 async def translate_sentence(
     request: TranslationRequest,
 ) -> TranslationResponse:
+    config = Config()
 
     model_id = get_model_id(
         config.map_lang_to_closest(request.src),
@@ -44,6 +44,8 @@ async def translate_sentence(
 async def translate_batch(
     request: BatchTranslationRequest,
 ) -> BatchTranslationResponse:
+    config = Config()
+
     model_id = get_model_id(
         config.map_lang_to_closest(request.src),
         config.map_lang_to_closest(request.tgt),
@@ -66,6 +68,8 @@ async def translate_batch(
 
 @translate_v1.get('/', status_code=status.HTTP_200_OK)
 async def languages() -> LanguagesResponse:
+    config = Config()
+
     return LanguagesResponse(
         languages=config.language_codes, models=config.languages_list
     )

@@ -24,19 +24,23 @@ class Config(metaclass=Singleton):
         self,
         config_file: Optional[str] = None,
         config_data: Optional[Dict] = None,
+        load_all_models: bool = False,
     ):
         self.loaded_models: Dict = {}
         self.language_codes: Dict = {}
         self.languages_list: Dict = {}
         self.config_data: Dict = config_data or {}
         self.config_file: str = config_file or CONFIG_JSON_PATH
+        self.load_all_models: bool = load_all_models
 
         self.warnings: List[str] = []
         self.messages: List[str] = []
 
         self._validate()
-        self._load_all_models()
-        self._load_languages_list()
+        if self.load_all_models or config_data:
+            self._load_language_codes()
+            self._load_all_models()
+            self._load_languages_list()
 
     def map_lang_to_closest(self, lang: str) -> str:
         if lang in self.language_codes:
@@ -146,6 +150,15 @@ class Config(metaclass=Singleton):
         # All good, add model to the list
         self.loaded_models[model_id] = model
 
+    def _load_language_codes(self) -> None:
+        if 'languages' in self.config_data:
+            self.language_codes = self.config_data['languages']
+            logger.debug(f'Languages: {self.language_codes}')
+        else:
+            self._log_warning(
+                "Language name spefication dictionary ('languages') not found in configuration."
+            )
+
     def _load_languages_list(self) -> None:
         for model_id in self.loaded_models.keys():
             if not (parsed_id := parse_model_id(model_id)):
@@ -170,7 +183,6 @@ class Config(metaclass=Singleton):
     def _validate(self) -> None:
         self._validate_config_file()
         self._validate_models()
-        self._validate_languages()
 
     def _validate_config_file(self) -> None:
         if self.config_data:
@@ -204,15 +216,6 @@ class Config(metaclass=Singleton):
             )
             logger.error(msg)
             raise ConfigurationException(msg)
-
-    def _validate_languages(self) -> None:
-        if 'languages' in self.config_data:
-            self.language_codes = self.config_data['languages']
-            logger.debug(f'Languages: {self.language_codes}')
-        else:
-            self._log_warning(
-                "Language name spefication dictionary ('languages') not found in configuration."
-            )
 
     def _validate_src_tgt(self, src: str, tgt: str) -> None:
         if not src in self.language_codes:
