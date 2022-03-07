@@ -13,7 +13,7 @@ def dummy_translator(content: str) -> str:
     return content
 
 
-def get_ctranslator(ctranslator_model_path):
+def get_ctranslator(ctranslator_model_path: str) -> Callable:
     from ctranslate2 import Translator
 
     ctranslator = Translator(ctranslator_model_path)
@@ -23,7 +23,7 @@ def get_ctranslator(ctranslator_model_path):
     return translator
 
 
-def get_batch_ctranslator(ctranslator_model_path):
+def get_batch_ctranslator(ctranslator_model_path: str) -> Callable:
     from ctranslate2 import Translator
 
     ctranslator = Translator(
@@ -77,3 +77,4 @@ def get_batch_opustranslator(
 
     if is_tokenizer_loaded and is_model_loaded:
         return translator
+    return None

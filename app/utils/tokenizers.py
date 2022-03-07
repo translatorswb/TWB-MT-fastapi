@@ -1,24 +1,25 @@
-def get_moses_tokenizer(lang):
+from typing import Callable, List
+
+
+def get_moses_tokenizer(lang: str) -> Callable[[str], str]:
     from sacremoses import MosesTokenizer
 
     moses_tokenizer = MosesTokenizer(lang=lang)
-    tokenizer = lambda x: moses_tokenizer.tokenize(
-        x, return_str=True
-    )  # string IN -> string OUT
+    tokenizer = lambda x: moses_tokenizer.tokenize(x, return_str=True)
     return tokenizer
 
 
-def get_moses_detokenizer(lang):
+def get_moses_detokenizer(lang: str) -> Callable[[str], str]:
     from sacremoses import MosesDetokenizer
 
     moses_detokenizer = MosesDetokenizer(lang=lang)
     tokenizer = lambda x: moses_detokenizer.detokenize(
         x.split(), return_str=True
-    )  # string IN -> string OUT
+    )
     return tokenizer
 
 
-def tokenize_with_punkset(doc, punkset):
+def tokenize_with_punkset(doc: str, punkset: List[str]) -> List[str]:
     tokens = []
     doc = ' '.join(doc.split())
 
@@ -37,5 +38,5 @@ def tokenize_with_punkset(doc, punkset):
     return tokens
 
 
-def get_custom_tokenizer(punkset):
+def get_custom_tokenizer(punkset: List[str]) -> Callable[[str], List[str]]:
     return lambda x: tokenize_with_punkset(x, punkset)

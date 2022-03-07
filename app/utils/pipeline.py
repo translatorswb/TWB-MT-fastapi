@@ -1,4 +1,5 @@
 import os
+from typing import Dict, List, Callable, Callable
 
 from app.exceptions import ConfigurationException, ModelLoadingException
 from app.utils.segmenters import (
@@ -27,8 +28,12 @@ from app.utils.utils import (
 
 
 def load_model_sentence_segmenter(
-    model_config, model, pipeline_msg, *args, **kwargs
-):
+    model: Dict,
+    model_config: Dict,
+    pipeline_msg: List[str],
+    *args,
+    **kwargs,
+) -> None:
     if 'sentence_split' in model_config:
         ss = model_config['sentence_split']
         if ss == 'nltk':
@@ -39,7 +44,13 @@ def load_model_sentence_segmenter(
             model['sentence_segmenter'] = get_custom_tokenizer(ss)
 
 
-def load_model_lowercaser(model_config, model, pipeline_msg, *args, **kwargs):
+def load_model_lowercaser(
+    model: Dict,
+    model_config: Dict,
+    pipeline_msg: List[str],
+    *args,
+    **kwargs,
+) -> None:
     if (
         'lowercase' in model_config['pipeline']
         and model_config['pipeline']['lowercase']
@@ -48,7 +59,13 @@ def load_model_lowercaser(model_config, model, pipeline_msg, *args, **kwargs):
         pipeline_msg.append('lowercase')
 
 
-def load_model_tokenizer(model_config, model, pipeline_msg, *args, **kwargs):
+def load_model_tokenizer(
+    model: Dict,
+    model_config: Dict,
+    pipeline_msg: List[str],
+    *args,
+    **kwargs,
+) -> None:
     if (
         'tokenize' in model_config['pipeline']
         and model_config['pipeline']['tokenize']
@@ -59,16 +76,16 @@ def load_model_tokenizer(model_config, model, pipeline_msg, *args, **kwargs):
 
 
 def load_model_segmenter(
-    model_config,
-    model,
-    pipeline_msg,
-    checks,
-    model_dir,
-    model_id,
-    warn,
+    checks: Dict,
+    model: Dict,
+    model_config: Dict,
+    model_dir: str,
+    model_id: str,
+    pipeline_msg: List[str],
+    warn: Callable,
     *args,
     **kwargs,
-):
+) -> None:
     if (
         model_dir
         and 'bpe' in model_config['pipeline']
@@ -139,8 +156,15 @@ def load_model_segmenter(
 
 
 def load_model_translator(
-    model_config, model, pipeline_msg, model_dir, warn, *args, **kwargs
-):
+    model: Dict,
+    model_config: Dict,
+    model_dir: str,
+    model_id: str,
+    pipeline_msg: List[str],
+    warn: Callable,
+    *args,
+    **kwargs,
+) -> None:
     if (
         'translate' in model_config['pipeline']
         and model_config['pipeline']['translate']
@@ -179,15 +203,16 @@ def load_model_translator(
 
 
 def load_model_desegmenter(
-    model_config,
-    model,
-    pipeline_msg,
-    model_dir,
-    checks,
-    warn,
+    checks: Dict,
+    model: Dict,
+    model_config: Dict,
+    model_dir: str,
+    model_id: str,
+    pipeline_msg: List[str],
+    warn: Callable,
     *args,
     **kwargs,
-):
+) -> None:
     if checks['bpe_ok']:
         model['postprocessors'].append(desegmenter)
         pipeline_msg.append('unbpe')
@@ -211,7 +236,13 @@ def load_model_desegmenter(
         model['postprocessors'].append(token_desegmenter)
 
 
-def load_model_detokenizer(model_config, model, pipeline_msg, *args, **kwargs):
+def load_model_detokenizer(
+    model: Dict,
+    model_config: Dict,
+    pipeline_msg: List[str],
+    *args,
+    **kwargs,
+) -> None:
     if (
         'tokenize' in model_config['pipeline']
         and model_config['pipeline']['tokenize']
@@ -221,7 +252,13 @@ def load_model_detokenizer(model_config, model, pipeline_msg, *args, **kwargs):
         pipeline_msg.append('mdetokenize')
 
 
-def load_model_recaser(model_config, model, pipeline_msg, *args, **kwargs):
+def load_model_recaser(
+    model: Dict,
+    model_config: Dict,
+    pipeline_msg: List[str],
+    *args,
+    **kwargs,
+) -> None:
     if (
         'recase' in model_config['pipeline']
         and model_config['pipeline']['recase']
@@ -230,7 +267,7 @@ def load_model_recaser(model_config, model, pipeline_msg, *args, **kwargs):
         pipeline_msg.append('recase')
 
 
-pipeline = [
+pipeline: List[Callable] = [
     load_model_sentence_segmenter,
     load_model_lowercaser,
     load_model_tokenizer,

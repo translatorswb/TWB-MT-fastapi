@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Callable
 from fastapi import Header, APIRouter, HTTPException, status
 
 from app.helpers.config import Config
-from app.utils.utils import get_model_id, parse_model_id
+from app.utils.utils import get_model_id
 from app.models.v1.translate import (
     BatchTranslationRequest,
     BatchTranslationResponse,
@@ -19,7 +19,9 @@ config = Config()
 
 
 @translate_v1.post('/', status_code=status.HTTP_200_OK)
-async def translate_sentence(request: TranslationRequest):
+async def translate_sentence(
+    request: TranslationRequest,
+) -> TranslationResponse:
 
     model_id = get_model_id(
         config.map_lang_to_closest(request.src),
@@ -30,7 +32,7 @@ async def translate_sentence(request: TranslationRequest):
     if not model_id in config.loaded_models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Language pair {model_id} is not supported.'
+            detail=f'Language pair {model_id} is not supported.',
         )
 
     translation = translate_text(model_id, request.text)
@@ -39,7 +41,9 @@ async def translate_sentence(request: TranslationRequest):
 
 
 @translate_v1.post('/batch', status_code=status.HTTP_200_OK)
-async def translate_batch(request: BatchTranslationRequest):
+async def translate_batch(
+    request: BatchTranslationRequest,
+) -> BatchTranslationResponse:
     model_id = get_model_id(
         config.map_lang_to_closest(request.src),
         config.map_lang_to_closest(request.tgt),
@@ -49,7 +53,7 @@ async def translate_batch(request: BatchTranslationRequest):
     if not model_id in config.loaded_models:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Language pair {model_id} is not supported.'
+            detail=f'Language pair {model_id} is not supported.',
         )
 
     translated_batch = []
@@ -61,7 +65,7 @@ async def translate_batch(request: BatchTranslationRequest):
 
 
 @translate_v1.get('/', status_code=status.HTTP_200_OK)
-async def languages():
+async def languages() -> LanguagesResponse:
     return LanguagesResponse(
         languages=config.language_codes, models=config.languages_list
     )

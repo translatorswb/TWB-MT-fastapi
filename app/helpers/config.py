@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import Optional, Dict, List
 
 from app.constants import SUPPORTED_MODEL_TYPES
 from app.exceptions import ConfigurationException, ModelLoadingException
@@ -19,21 +20,25 @@ logger = logging.getLogger('console_logger')
 
 
 class Config(metaclass=Singleton):
-    def __init__(self, config_file=None, config_data=None):
-        self.loaded_models = {}
-        self.language_codes = {}
-        self.languages_list = {}
-        self.config_data = config_data or {}
-        self.config_file = config_file or CONFIG_JSON_PATH
+    def __init__(
+        self,
+        config_file: Optional[str] = None,
+        config_data: Optional[Dict] = None,
+    ):
+        self.loaded_models: Dict = {}
+        self.language_codes: Dict = {}
+        self.languages_list: Dict = {}
+        self.config_data: Dict = config_data or {}
+        self.config_file: str = config_file or CONFIG_JSON_PATH
 
-        self.warnings = []
-        self.messages = []
+        self.warnings: List[str] = []
+        self.messages: List[str] = []
 
         self._validate()
         self._load_all_models()
         self._load_languages_list()
 
-    def map_lang_to_closest(self, lang):
+    def map_lang_to_closest(self, lang: str) -> str:
         if lang in self.language_codes:
             return lang
         elif '_' in lang:
@@ -42,7 +47,7 @@ class Config(metaclass=Singleton):
                 return superlang
         return ''
 
-    def _get_model_path(self, model_config, model_id):
+    def _get_model_path(self, model_config: Dict, model_id: str) -> Optional[str]:
         model_dir = None
 
         # Check model path
@@ -63,7 +68,7 @@ class Config(metaclass=Singleton):
             )
         return model_dir
 
-    def _is_valid_model_config(self, model_config):
+    def _is_valid_model_config(self, model_config: Dict) -> bool:
         # Check if model_type src and tgt fields are specified
         for item in ['src', 'tgt', 'model_type']:
             if item not in model_config:
@@ -73,7 +78,7 @@ class Config(metaclass=Singleton):
                 return False
         return True
 
-    def _is_valid_model_type(self, model_type):
+    def _is_valid_model_type(self, model_type: str) -> bool:
         if not model_type in SUPPORTED_MODEL_TYPES:
             self._log_warning(
                 f'`model_type` not recognized: {model_type}. Skipping load'
@@ -81,7 +86,7 @@ class Config(metaclass=Singleton):
             return False
         return True
 
-    def _load_all_models(self):
+    def _load_all_models(self) -> None:
         for model_config in self.config_data['models']:
             if not 'load' in model_config or not model_config['load']:
                 continue
@@ -98,27 +103,25 @@ class Config(metaclass=Singleton):
             except ModelLoadingException:
                 continue
 
-    def _load_model(self, model_config):
-        src = model_config['src']
-        tgt = model_config['tgt']
-        alt_id = model_config.get('alt')
-        pipeline_msg = []
-        model_id = get_model_id(
-            model_config['src'], model_config['tgt'], alt_id
-        )
-        model_dir = self._get_model_path(model_config, model_id)
-        model = {
+    def _load_model(self, model_config: Dict) -> None:
+        src: str = model_config['src']
+        tgt: str = model_config['tgt']
+        alt_id: Optional[str] = model_config.get('alt')
+        pipeline_msg: List[str] = []
+        model_id: str = get_model_id(src, tgt, alt_id)
+        model_dir: Optional[str] = self._get_model_path(model_config, model_id)
+        model: Dict = {
             'src': src,
             'tgt': tgt,
             'sentence_segmenter': None,
             'preprocessors': [],
             'postprocessors': [],
         }
-        checks = {
+        checks: Dict = {
             'bpe_ok': False,
             'sentencepiece_ok': False,
         }
-        kwargs = {
+        kwargs: Dict = {
             'model_config': model_config,
             'model': model,
             'checks': checks,
@@ -143,9 +146,12 @@ class Config(metaclass=Singleton):
         # All good, add model to the list
         self.loaded_models[model_id] = model
 
-    def _load_languages_list(self):
+    def _load_languages_list(self) -> None:
         for model_id in self.loaded_models.keys():
-            source, target, alt = parse_model_id(model_id)
+            if not (parsed_id := parse_model_id(model_id)):
+                self._log_warning(f'Unable to parse model_id of {model_id}')
+                continue
+            source, target, alt = parsed_id
             if not source in self.languages_list:
                 self.languages_list[source] = {}
             if not target in self.languages_list[source]:
@@ -153,20 +159,20 @@ class Config(metaclass=Singleton):
 
             self.languages_list[source][target].append(model_id)
 
-    def _log_warning(self, msg):
+    def _log_warning(self, msg: str) -> None:
         logger.warning(msg)
         self.warnings.append(msg)
 
-    def _log_info(self, msg):
+    def _log_info(self, msg: str) -> None:
         logger.info(msg)
         self.messages.append(msg)
 
-    def _validate(self):
+    def _validate(self) -> None:
         self._validate_config_file()
         self._validate_models()
         self._validate_languages()
 
-    def _validate_config_file(self):
+    def _validate_config_file(self) -> None:
         if self.config_data:
             return
 
@@ -185,7 +191,7 @@ class Config(metaclass=Singleton):
                 logger.error(msg)
                 raise ConfigurationException(msg)
 
-    def _validate_models(self):
+    def _validate_models(self) -> None:
         # Check if MODELS_ROOT_DIR exists
         if not os.path.exists(MODELS_ROOT_DIR):
             msg = '`models` directory not found. No models will be loaded.'
@@ -199,7 +205,7 @@ class Config(metaclass=Singleton):
             logger.error(msg)
             raise ConfigurationException(msg)
 
-    def _validate_languages(self):
+    def _validate_languages(self) -> None:
         if 'languages' in self.config_data:
             self.language_codes = self.config_data['languages']
             logger.debug(f'Languages: {self.language_codes}')
@@ -208,7 +214,7 @@ class Config(metaclass=Singleton):
                 "Language name spefication dictionary ('languages') not found in configuration."
             )
 
-    def _validate_src_tgt(self, src, tgt):
+    def _validate_src_tgt(self, src: str, tgt: str) -> None:
         if not src in self.language_codes:
             self._log_warning(
                 f'Source language code `{src}` not defined in '
@@ -220,7 +226,9 @@ class Config(metaclass=Singleton):
                 'languages dict. This will surely break something.'
             )
 
-    def _validate_model_conflicts(self, model_config, model_id):
+    def _validate_model_conflicts(
+        self, model_config: Dict, model_id: str
+    ) -> None:
         # Check conflicting subword segmenters
         if (
             'bpe' in model_config['pipeline']
