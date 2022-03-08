@@ -5,9 +5,6 @@ from app.helpers.config import Config
 
 
 class BaseTestCase:
-    API_VERSION = 1
-    SERVICE = 'translate'
-
     def setup(self):
         self.client = TestClient(app)
         self.config_data = {
@@ -31,6 +28,15 @@ class BaseTestCase:
             ],
         }
         self.config = Config(config_data=self.config_data)
+
+
+class APIBaseTestCase(BaseTestCase):
+    API_VERSION = 1
+    SERVICE = 'translate'
+
+    def setup(self):
+        self.client = TestClient(app)
+        super().setup()
 
     def get_endpoint(self, endpoint: str = '/') -> str:
         endpoint = f'/{endpoint}' if not endpoint.startswith('/') else endpoint

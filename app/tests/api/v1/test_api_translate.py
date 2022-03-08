@@ -2,10 +2,10 @@ import json
 
 from fastapi import status
 
-from app.tests.base_test_case import BaseTestCase
+from app.tests.base_test_case import APIBaseTestCase
 
 
-class TestTranslateApiV1(BaseTestCase):
+class TestTranslateApiV1(APIBaseTestCase):
     API_VERSION = 1
 
     def test_list_languages(self):

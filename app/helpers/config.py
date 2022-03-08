@@ -51,7 +51,9 @@ class Config(metaclass=Singleton):
                 return superlang
         return ''
 
-    def _get_model_path(self, model_config: Dict, model_id: str) -> Optional[str]:
+    def _get_model_path(
+        self, model_config: Dict, model_id: str
+    ) -> Optional[str]:
         model_dir = None
 
         # Check model path

@@ -10,9 +10,9 @@ def translate_text(model_id: str, text: str) -> Optional[str]:
         return None
 
     if config.loaded_models[model_id]['sentence_segmenter']:
-        sentence_batch = config.loaded_models[model_id][
-            'sentence_segmenter'
-        ](text)
+        sentence_batch = config.loaded_models[model_id]['sentence_segmenter'](
+            text
+        )
     else:
         sentence_batch = [text]
 

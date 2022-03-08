@@ -73,4 +73,3 @@ async def languages() -> LanguagesResponse:
     return LanguagesResponse(
         languages=config.language_codes, models=config.languages_list
     )
-
