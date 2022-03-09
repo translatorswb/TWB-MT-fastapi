@@ -36,7 +36,9 @@ class Config(metaclass=Singleton):
         self.warnings: List[str] = []
         self.messages: List[str] = []
 
-        self._validate()
+        if not config_data:
+            self._validate()
+
         if self.load_all_models or config_data:
             self._load_language_codes()
             self._load_all_models()
@@ -187,9 +189,6 @@ class Config(metaclass=Singleton):
         self._validate_models()
 
     def _validate_config_file(self) -> None:
-        if self.config_data:
-            return
-
         # Check if config file is there and well formatted
         if not os.path.exists(self.config_file):
             self._log_warning(

@@ -1,6 +1,4 @@
-from typing import List, Optional, Dict, Callable
-
-from fastapi import Header, APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 
 from app.helpers.config import Config
 from app.utils.utils import get_model_id

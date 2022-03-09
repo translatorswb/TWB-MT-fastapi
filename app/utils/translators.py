@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional, Dict, Callable
+from typing import Optional, Callable
 
 from app.constants import HELSINKI_NLP
 from app.settings import (

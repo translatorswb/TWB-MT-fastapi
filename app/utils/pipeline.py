@@ -1,7 +1,7 @@
 import os
 from typing import Dict, List, Callable, Callable
 
-from app.exceptions import ConfigurationException, ModelLoadingException
+from app.exceptions import ModelLoadingException
 from app.utils.segmenters import (
     desegmenter,
     get_bpe_segmenter,
