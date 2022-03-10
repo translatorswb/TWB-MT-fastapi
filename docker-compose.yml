@@ -1,22 +1,37 @@
 version: '3.7'
 
 services:
-
   mt:
-    build: .
-    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000 --log-config logging.yml
+    build:
+      context: .
+      dockerfile: ./compose/app/Dockerfile
+    image: twb_mt
+    command: /start.sh
     restart: unless-stopped
     # runtime: nvidia  # Comment out in local
     ports:
       - 8001:8000
     volumes:
       - .:/app
-      - ../translation-models:/app/models
-    environment:
-      - MT_API_CONFIG=/app/config.json
-      - MT_API_DEVICE=cpu #or gpu, if so make runtime:nvidia
-      - MT_API_THREADS=16
-      - MODELS_ROOT=/app/models
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=all
+      - ../.vols/translation-models:/models
+    env_file:
+      - .env/.dev
+    depends_on:
+      - redis
 
+  redis:
+    image: redis:6-alpine
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: ./compose/app/Dockerfile
+    image: celery_worker
+    command: /start-celeryworker
+    volumes:
+      - .:/app
+      - ../.vols/translation-models:/models
+    env_file:
+      - .env/.dev
+    depends_on:
+      - redis

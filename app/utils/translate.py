@@ -5,8 +5,11 @@ from app.helpers.config import Config
 
 def translate_text(model_id: str, text: str) -> Optional[str]:
     config = Config()
+    print('***** vars(config)', str(vars(config)), flush=True)
+
 
     if not model_id in config.loaded_models:
+        print('***** "im here"', str("im here"), flush=True)
         return None
 
     if config.loaded_models[model_id]['sentence_segmenter']:
