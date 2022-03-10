@@ -9,35 +9,26 @@ from app.models.v1.translate import (
     TranslationRequest,
     TranslationResponse,
 )
+from app.utils.translate import translate_text
+from app.tasks import translate_text_async
 
 
-translate_v1 = APIRouter(prefix='/api/v1/translate')
+translate_v2 = APIRouter(prefix='/api/v2/translate')
 
 
-@translate_v1.post('/', status_code=status.HTTP_200_OK)
-async def translate_sentence(
-    request: TranslationRequest,
-) -> TranslationResponse:
+@translate_v2.post('/', status_code=status.HTTP_200_OK)
+async def translate_sentence_async(request: TranslationRequest):
     config = Config()
 
-    model_id = get_model_id(
-        config.map_lang_to_closest(request.src),
-        config.map_lang_to_closest(request.tgt),
-        request.alt,
-    )
+    model_id = get_model_id(request.src, request.tgt)
 
-    if not model_id in config.loaded_models:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Language pair {model_id} is not supported.',
-        )
+    task = translate_text_async.delay(model_id, request.text)
 
-    translation = translate_text(model_id, request.text)
-
-    return TranslationResponse(translation=translation)
+    return {'uid': task.id,
+            'status': task.status}
 
 
-@translate_v1.post('/batch', status_code=status.HTTP_200_OK)
+@translate_v2.post('/batch', status_code=status.HTTP_200_OK)
 async def translate_batch(
     request: BatchTranslationRequest,
 ) -> BatchTranslationResponse:
@@ -63,10 +54,23 @@ async def translate_batch(
     return BatchTranslationResponse(translation=translated_batch)
 
 
-@translate_v1.get('/', status_code=status.HTTP_200_OK)
+@translate_v2.get('/', status_code=status.HTTP_200_OK)
 async def languages() -> LanguagesResponse:
     config = Config()
 
     return LanguagesResponse(
         languages=config.language_codes, models=config.languages_list
     )
+
+
+@translate_v2.get('/{uid}', status_code=status.HTTP_200_OK)
+async def translation_async_result(uid):
+    from celery.result import AsyncResult
+    result = AsyncResult(uid)
+    if result.successful():
+        return TranslationResponse(translation=result.result)
+    return {
+            'status': result.status,
+            'info': result.info
+            }
+
