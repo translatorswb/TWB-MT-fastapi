@@ -8,4 +8,3 @@ def create_celery():
     celery_app.config_from_object(settings, namespace="CELERY")
 
     return celery_app
-

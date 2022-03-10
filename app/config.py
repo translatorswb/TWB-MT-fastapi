@@ -6,8 +6,13 @@ from functools import lru_cache
 class BaseConfig:
     BASE_DIR = pathlib.Path(__file__).parent.parent
 
-    CELERY_BROKER_URL: str = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
-    CELERY_RESULT_BACKEND: str = os.environ.get("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0")
+    CELERY_BROKER_URL: str = os.environ.get(
+        "CELERY_BROKER_URL", "redis://127.0.0.1:6379/0"
+    )
+    CELERY_RESULT_BACKEND: str = os.environ.get(
+        "CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0"
+    )
+
 
 class DevelopmentConfig(BaseConfig):
     pass
@@ -26,7 +31,7 @@ def get_settings():
     config_cls_dict = {
         "development": DevelopmentConfig,
         "production": ProductionConfig,
-        "testing": TestingConfig
+        "testing": TestingConfig,
     }
 
     config_name = os.environ.get("FASTAPI_CONFIG", "development")
@@ -35,4 +40,3 @@ def get_settings():
 
 
 settings = get_settings()
-

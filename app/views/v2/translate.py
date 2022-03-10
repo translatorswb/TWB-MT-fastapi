@@ -24,8 +24,7 @@ async def translate_sentence_async(request: TranslationRequest):
 
     task = translate_text_async.delay(model_id, request.text)
 
-    return {'uid': task.id,
-            'status': task.status}
+    return {'uid': task.id, 'status': task.status}
 
 
 @translate_v2.post('/batch', status_code=status.HTTP_200_OK)
@@ -66,11 +65,8 @@ async def languages() -> LanguagesResponse:
 @translate_v2.get('/{uid}', status_code=status.HTTP_200_OK)
 async def translation_async_result(uid):
     from celery.result import AsyncResult
+
     result = AsyncResult(uid)
     if result.successful():
         return TranslationResponse(translation=result.result)
-    return {
-            'status': result.status,
-            'info': result.info
-            }
-
+    return {'status': result.status, 'info': result.info}
