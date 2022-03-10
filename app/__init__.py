@@ -19,8 +19,8 @@ def create_app() -> FastAPI:
 
     app.include_router(translate_v2)
 
-    # @app.on_event('startup')
-    # async def startup_event() -> None:
-    #    config = Config(load_all_models=True)
+    @app.on_event('startup')
+    async def startup_event() -> None:
+        config = Config(load_all_models=True)
 
     return app

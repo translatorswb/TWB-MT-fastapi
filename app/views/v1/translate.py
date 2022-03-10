@@ -9,6 +9,7 @@ from app.models.v1.translate import (
     TranslationRequest,
     TranslationResponse,
 )
+from app.utils.translate import translate_text
 
 
 translate_v1 = APIRouter(prefix='/api/v1/translate')

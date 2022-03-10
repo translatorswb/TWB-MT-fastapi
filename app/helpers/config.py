@@ -24,7 +24,9 @@ class Config(metaclass=Singleton):
         self,
         config_file: Optional[str] = None,
         config_data: Optional[Dict] = None,
+        model_id: Optional[str] = None,
         load_all_models: bool = False,
+        log_messages: bool = True,
     ):
         self.loaded_models: Dict = {}
         self.language_codes: Dict = {}
@@ -32,6 +34,8 @@ class Config(metaclass=Singleton):
         self.config_data: Dict = config_data or {}
         self.config_file: str = config_file or CONFIG_JSON_PATH
         self.load_all_models: bool = load_all_models
+        self.log_messages = log_messages
+        self.model_id = model_id
 
         self.warnings: List[str] = []
         self.messages: List[str] = []
@@ -39,10 +43,9 @@ class Config(metaclass=Singleton):
         if not config_data:
             self._validate()
 
-        if self.load_all_models or config_data:
-            self._load_language_codes()
-            self._load_all_models()
-            self._load_languages_list()
+        self._load_language_codes()
+        self._load_all_models()
+        self._load_languages_list()
 
     def map_lang_to_closest(self, lang: str) -> str:
         if lang in self.language_codes:
@@ -95,7 +98,17 @@ class Config(metaclass=Singleton):
         return True
 
     def _load_all_models(self) -> None:
-        for model_config in self.config_data['models']:
+        models_for_loading = self.config_data['models']
+
+        # Filter models for lazy loading only a specific model by `model_id`
+        if self.model_id is not None:
+            models_for_loading = [
+                m
+                for m in models_for_loading
+                if get_model_id(m['src'], m['tgt']) == self.model_id
+            ]
+
+        for model_config in models_for_loading:
             if not 'load' in model_config or not model_config['load']:
                 continue
 
@@ -177,12 +190,14 @@ class Config(metaclass=Singleton):
             self.languages_list[source][target].append(model_id)
 
     def _log_warning(self, msg: str) -> None:
-        logger.warning(msg)
         self.warnings.append(msg)
+        if self.log_messages:
+            logger.warning(msg)
 
     def _log_info(self, msg: str) -> None:
-        logger.info(msg)
         self.messages.append(msg)
+        if self.log_messages:
+            logger.info(msg)
 
     def _validate(self) -> None:
         self._validate_config_file()
