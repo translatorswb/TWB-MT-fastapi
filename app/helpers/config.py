@@ -64,11 +64,11 @@ class Config(metaclass=Singleton):
                 MODELS_ROOT_DIR, model_config['model_path']
             )
             if not os.path.exists(model_dir):
-                model_dir = None
                 self._log_warning(
                     f'Model path {model_dir} not found for model {model_id}. '
                     "Can't load custom translation model or segmenters."
                 )
+                model_dir = None
         else:
             self._log_warning(
                 f'Model path not specified for model {model_id}. '
