@@ -8,3 +8,7 @@ sentencepiece==0.1.96
 torch==1.7.1
 torchvision==0.8.2
 transformers==4.16.2
+celery==5.1.2
+redis==3.5.3
+flower==1.0.0
+watchgod==0.7
