@@ -2,11 +2,18 @@ FROM python:3.8-slim
 
 # Project setup
 
-ENV VIRTUAL_ENV=/opt/venv
+ENV VIRTUAL_ENV=/opt/venv \
+    UWSGI_USER=twb \
+    UWSGI_GROUP=twb
 
 RUN apt-get update \
     && apt-get install -y telnet netcat \
     && apt-get clean
+
+#################################
+# Create local user UWSGI_USER` #
+#################################
+RUN adduser --disabled-password --gecos '' "$UWSGI_USER"
 
 RUN python -m venv "$VIRTUAL_ENV"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
