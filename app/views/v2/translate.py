@@ -1,3 +1,5 @@
+from typing import Dict
+
 from fastapi import APIRouter, HTTPException, status
 from celery.result import AsyncResult
 
@@ -34,12 +36,9 @@ async def translate_batch(
 
 
 @translate_v2.get('/', status_code=status.HTTP_200_OK)
-async def languages() -> LanguagesResponse:
+async def languages() -> Dict:
     config = Config()
-
-    return LanguagesResponse(
-        languages=config.language_codes, models=config.languages_list
-    )
+    return {'models': config.get_all_potential_languages()}
 
 
 @translate_v2.get('/{uid}', status_code=status.HTTP_200_OK)

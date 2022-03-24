@@ -5,19 +5,15 @@ from fastapi.testclient import TestClient
 
 from main import app
 from app.helpers.config import Config
+from app.tests.base_test_case import APIBaseTestCase
 
 
-class TestTranslateApiV2:
+class TestTranslateApiV2(APIBaseTestCase):
     API_VERSION = 2
-    SERVICE = 'translate'
 
     def setup(self):
         self.client = TestClient(app)
         self.config = Config()
-
-    def get_endpoint(self, endpoint: str = '/') -> str:
-        endpoint = f'/{endpoint}' if not endpoint.startswith('/') else endpoint
-        return f'/api/v{self.API_VERSION}/{self.SERVICE}{endpoint}'
 
     def test_async_translate_text_valid_code(self):
         options = {

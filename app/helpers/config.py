@@ -34,18 +34,22 @@ class Config(metaclass=Singleton):
         self.config_data: Dict = config_data or {}
         self.config_file: str = config_file or CONFIG_JSON_PATH
         self.load_all_models: bool = load_all_models
-        self.log_messages = log_messages
-        self.model_id = model_id
+        self.log_messages: List = log_messages
+        self.model_id: Optional[str] = model_id
+        self.models_for_loading: List = []
 
         self.warnings: List[str] = []
         self.messages: List[str] = []
 
         if not config_data:
-            self._validate()
+            self._validate_config_file()
+            self._load_config_file()
 
+        self._validate_models()
         self._load_language_codes()
-        if self.load_all_models:
-            self._load_all_models()
+        if config_data or load_all_models or model_id:
+            self._get_models_for_loading()
+        self._load_available_models()
         self._load_languages_list()
 
     def map_lang_to_closest(self, lang: str) -> str:
@@ -68,11 +72,11 @@ class Config(metaclass=Singleton):
                 MODELS_ROOT_DIR, model_config['model_path']
             )
             if not os.path.exists(model_dir):
-                model_dir = None
                 self._log_warning(
                     f'Model path {model_dir} not found for model {model_id}. '
                     "Can't load custom translation model or segmenters."
                 )
+                model_dir = None
         else:
             self._log_warning(
                 f'Model path not specified for model {model_id}. '
@@ -98,34 +102,40 @@ class Config(metaclass=Singleton):
             return False
         return True
 
-    def _load_all_models(self) -> None:
-        models_for_loading = self.config_data['models']
+    def _get_models_for_loading(self):
+        load = self.config_data['models']
 
         # Filter models for lazy loading only a specific model by `model_id`
         if self.model_id is not None:
-            models_for_loading = [
+            load = [
                 m
-                for m in models_for_loading
+                for m in load
                 if get_model_id(m['src'], m['tgt']) == self.model_id
             ]
+            if len(load) > 1:
+                load = load[:1]
 
-        for model_config in models_for_loading:
-            if not 'load' in model_config or not model_config['load']:
-                continue
+        if self.load_all_models:
+            load = [
+                model for model in load if 'load' in model and model['load']
+            ]
 
-            # CONFIG CHECKS
-            if not self._is_valid_model_config(model_config):
-                continue
+        self.models_for_loading = load
 
-            if not self._is_valid_model_type(model_config['model_type']):
-                continue
-
+    def _load_available_models(self) -> None:
+        for model_config in self.models_for_loading:
             try:
                 self._load_model(model_config)
             except ModelLoadingException:
                 continue
 
     def _load_model(self, model_config: Dict) -> None:
+
+        if not self._is_valid_model_config(
+            model_config
+        ) or not self._is_valid_model_type(model_config['model_type']):
+            raise ModelLoadingException
+
         src: str = model_config['src']
         tgt: str = model_config['tgt']
         alt_id: Optional[str] = model_config.get('alt')
@@ -177,6 +187,28 @@ class Config(metaclass=Singleton):
                 "Language name spefication dictionary ('languages') not found in configuration."
             )
 
+    def get_all_potential_languages(self) -> Dict:
+        languages = {}
+        for model_config in self.config_data['models']:
+            if model_config['model_type'] == 'ctranslator2':
+                model_path = model_config.get('model_path')
+                if model_path is None:
+                    continue
+                model_dir = os.path.join(MODELS_ROOT_DIR, model_path)
+                if not os.path.exists(model_dir):
+                    continue
+            source: str = model_config['src']
+            target: str = model_config['tgt']
+            alt_id: Optional[str] = model_config.get('alt')
+            model_id: str = get_model_id(source, target, alt_id)
+            if source not in languages:
+                languages[source] = {}
+            if target not in languages[source]:
+                languages[source][target] = []
+
+            languages[source][target].append(model_id)
+        return languages
+
     def _load_languages_list(self) -> None:
         for model_id in self.loaded_models.keys():
             if not (parsed_id := parse_model_id(model_id)):
@@ -200,9 +232,9 @@ class Config(metaclass=Singleton):
         if self.log_messages:
             logger.info(msg)
 
-    def _validate(self) -> None:
-        self._validate_config_file()
-        self._validate_models()
+    def _load_config_file(self):
+        with open(self.config_file, 'r') as jsonfile:
+            self.config_data = json.load(jsonfile)
 
     def _validate_config_file(self) -> None:
         # Check if config file is there and well formatted
@@ -214,7 +246,7 @@ class Config(metaclass=Singleton):
         else:
             try:
                 with open(self.config_file, 'r') as jsonfile:
-                    self.config_data = json.load(jsonfile)
+                    config_data = json.load(jsonfile)
             except json.decoder.JSONDecodeError:
                 msg = 'Config file format broken. No models will be loaded.'
                 logger.error(msg)

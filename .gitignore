@@ -1,6 +1,7 @@
 models/*
 .DS_Store
 app/.DS_Store
+*.swp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
