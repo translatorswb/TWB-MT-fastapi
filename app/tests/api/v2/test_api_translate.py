@@ -13,11 +13,7 @@ class TestTranslateApiV2:
 
     def setup(self):
         self.client = TestClient(app)
-        self.config_data = {
-            'languages': {},
-            'models': [],
-        }
-        self.config = Config(config_data=self.config_data)
+        self.config = Config()
 
     def get_endpoint(self, endpoint: str = '/') -> str:
         endpoint = f'/{endpoint}' if not endpoint.startswith('/') else endpoint

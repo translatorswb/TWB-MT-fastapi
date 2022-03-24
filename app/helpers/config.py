@@ -44,7 +44,8 @@ class Config(metaclass=Singleton):
             self._validate()
 
         self._load_language_codes()
-        self._load_all_models()
+        if self.load_all_models:
+            self._load_all_models()
         self._load_languages_list()
 
     def map_lang_to_closest(self, lang: str) -> str:
