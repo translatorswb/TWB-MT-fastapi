@@ -11,6 +11,7 @@ def test_task_translate_text_async():
     translation = translate_text_async(**options)
     assert translation == expected_translation
 
+
 def test_task_translate_batch_async():
     options = {
         'model_id': 'en-fr',

@@ -4,4 +4,4 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-uvicorn main:app --reload --host 0.0.0.0 --port 8000 --log-config logging.yml
+uvicorn main:app --reload --host 0.0.0.0 --port 8000

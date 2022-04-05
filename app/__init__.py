@@ -7,6 +7,10 @@ from . import tasks
 def create_app() -> FastAPI:
     app = FastAPI()
 
+    from app.logging import configure_logging
+
+    configure_logging()
+
     from app.celery_utils import create_celery
 
     app.celery_app = create_celery()
