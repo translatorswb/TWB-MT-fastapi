@@ -15,6 +15,7 @@ from app.utils.translate import translate_text
 translate_v1 = APIRouter(prefix='/api/v1/translate')
 
 
+@translate_v1.post('', status_code=status.HTTP_200_OK)
 @translate_v1.post('/', status_code=status.HTTP_200_OK)
 async def translate_sentence(
     request: TranslationRequest,
@@ -64,6 +65,7 @@ async def translate_batch(
     return BatchTranslationResponse(translation=translated_batch)
 
 
+@translate_v1.get('', status_code=status.HTTP_200_OK)
 @translate_v1.get('/', status_code=status.HTTP_200_OK)
 async def languages() -> LanguagesResponse:
     config = Config()
