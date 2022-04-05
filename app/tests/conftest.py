@@ -3,7 +3,7 @@ import os
 import pytest
 
 
-os.environ['FASTAPI_CONFIG'] = 'testing'  # noqa
+os.environ['FASTAPI_CONFIG'] = 'testing'
 
 
 @pytest.fixture
