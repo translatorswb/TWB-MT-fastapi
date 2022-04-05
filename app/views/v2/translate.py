@@ -19,6 +19,7 @@ from app.tasks import translate_text_async, translate_batch_async
 translate_v2 = APIRouter(prefix='/api/v2/translate')
 
 
+@translate_v2.post('', status_code=status.HTTP_200_OK)
 @translate_v2.post('/', status_code=status.HTTP_200_OK)
 async def translate_sentence_async(request: TranslationRequest):
     model_id = get_model_id(request.src, request.tgt)
@@ -35,6 +36,7 @@ async def translate_batch(
     return {'uid': task.id, 'status': task.status}
 
 
+@translate_v2.get('', status_code=status.HTTP_200_OK)
 @translate_v2.get('/', status_code=status.HTTP_200_OK)
 async def languages() -> Dict:
     config = Config()

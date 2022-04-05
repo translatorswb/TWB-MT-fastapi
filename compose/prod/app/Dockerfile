@@ -23,12 +23,13 @@ COPY ./app/requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt \
     && rm -rf /root/.cache/pip
 
-COPY ./compose/app/start.sh /start.sh
+COPY ./compose/prod/app/start.sh /start.sh
 RUN chmod +x /start.sh
 
-COPY ./compose/app/celery/worker/start.sh /start-celeryworker
+COPY ./compose/prod/app/celery/worker/start.sh /start-celeryworker
 RUN chmod +x /start-celeryworker
 
+COPY . /app
 WORKDIR /app
 
 COPY ./app/nltk_pkg.py /app/nltk_pkg.py

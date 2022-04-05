@@ -1,21 +1,25 @@
 version: '3.7'
 
 services:
+  nginx:
+    build: ./compose/prod/nginx
+    ports:
+      - 80:80
+    depends_on:
+      - mt
+
   mt:
     build:
       context: .
-      dockerfile: ./compose/dev/app/Dockerfile
+      dockerfile: ./compose/prod/app/Dockerfile
     image: twb_mt
     command: /start.sh
     restart: unless-stopped
     # runtime: nvidia  # Comment out in local
-    ports:
-      - 8001:8000
     volumes:
-      - .:/app
       - /translation-models:/models
     env_file:
-      - .env/.dev
+      - .env/.prod
     depends_on:
       - redis
 
@@ -25,13 +29,12 @@ services:
   celery_worker:
     build:
       context: .
-      dockerfile: ./compose/dev/app/Dockerfile
+      dockerfile: ./compose/prod/app/Dockerfile
     image: celery_worker
     command: /start-celeryworker
     volumes:
-      - .:/app
       - /translation-models:/models
     env_file:
-      - .env/.dev
+      - .env/.prod
     depends_on:
       - redis
