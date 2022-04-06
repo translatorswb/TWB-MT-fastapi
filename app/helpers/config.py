@@ -45,13 +45,11 @@ class Config(metaclass=Singleton):
             self._load_languages_list()
 
     def map_lang_to_closest(self, lang: str) -> str:
-        if lang in self.language_codes:
-            return lang
-        elif '_' in lang:
+        if '_' in lang:
             superlang = lang.split('_')[0]
             if superlang in self.language_codes:
                 return superlang
-        return ''
+        return lang
 
     def _get_model_path(
         self, model_config: Dict, model_id: str
@@ -209,7 +207,7 @@ class Config(metaclass=Singleton):
         if not os.path.exists(MODELS_ROOT_DIR):
             msg = '`models` directory not found. No models will be loaded.'
             logger.error(msg)
-            raise ConfigurationException(msg)
+            # raise ConfigurationException(msg)
 
         if not 'models' in self.config_data:
             msg = (
