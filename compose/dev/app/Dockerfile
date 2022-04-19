@@ -10,9 +10,7 @@ RUN apt-get update \
     && apt-get install -y telnet netcat \
     && apt-get clean
 
-#################################
-# Create local user TWB_USER` #
-#################################
+# Create local user TWB_USER
 RUN adduser --disabled-password --gecos '' "$TWB_USER"
 
 RUN python -m venv "$VIRTUAL_ENV"

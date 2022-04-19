@@ -4,7 +4,12 @@ FROM nvidia/cuda:10.2-devel
 # Miniconda install copy-pasted from Miniconda's own Dockerfile reachable 
 # at: https://github.com/ContinuumIO/docker-images/blob/master/miniconda3/debian/Dockerfile
 
-ENV PATH /opt/conda/bin:$PATH
+ENV PATH /opt/conda/bin:$PATH \
+    TWB_USER=twb \
+    TWB_GROUP=twb
+
+# Create local user TWB_USER
+RUN adduser --disabled-password --gecos '' "$TWB_USER"
 
 RUN apt-get update --fix-missing && \
     apt-get install -y wget bzip2 ca-certificates libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
@@ -26,8 +31,6 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 
 # Project setup
 
-WORKDIR /app
-
 COPY ./requirements.txt /app/requirements.txt
 
 RUN apt-get update \
@@ -37,6 +40,14 @@ RUN apt-get update \
 RUN pip install -r /app/requirements.txt \
     && rm -rf /root/.cache/pip
 
-COPY . /app/
+COPY ./compose/prod/app/start.sh /start.sh
+RUN chmod +x /start.sh
 
+COPY ./compose/prod/app/celery/worker/start.sh /start-celeryworker
+RUN chmod +x /start-celeryworker
+
+COPY . /app
+WORKDIR /app
+
+COPY ./app/nltk_pkg.py /app/nltk_pkg.py
 RUN python /app/nltk_pkg.py

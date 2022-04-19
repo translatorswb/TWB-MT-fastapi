@@ -5,7 +5,8 @@ services:
     build:
       context: .
       dockerfile: ./compose/dev/app/Dockerfile
-    image: twb_mt
+      # dockerfile: ./compose/dev/app/Dockerfile-gpu
+    image: twb_mt_dev
     command: /start.sh
     restart: unless-stopped
     # runtime: nvidia  # Comment out in local
@@ -26,7 +27,8 @@ services:
     build:
       context: .
       dockerfile: ./compose/dev/app/Dockerfile
-    image: celery_worker
+      # dockerfile: ./compose/dev/app/Dockerfile-gpu
+    image: celery_worker_dev
     command: /start-celeryworker
     volumes:
       - .:/app

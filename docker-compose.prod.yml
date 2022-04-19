@@ -12,7 +12,8 @@ services:
     build:
       context: .
       dockerfile: ./compose/prod/app/Dockerfile
-    image: twb_mt
+      # dockerfile: ./compose/prod/app/Dockerfile-gpu
+    image: twb_mt_prod
     command: /start.sh
     restart: unless-stopped
     # runtime: nvidia  # Comment out in local
@@ -30,7 +31,8 @@ services:
     build:
       context: .
       dockerfile: ./compose/prod/app/Dockerfile
-    image: celery_worker
+      # dockerfile: ./compose/prod/app/Dockerfile-gpu
+    image: celery_worker_prod
     command: /start-celeryworker
     volumes:
       - /translation-models:/models
