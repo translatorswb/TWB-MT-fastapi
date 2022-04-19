@@ -1,0 +1,10 @@
+MT_API_CONFIG=/app/app/config.json
+MT_API_DEVICE=cpu #or gpu, if so make runtime:nvidia
+MT_API_THREADS=16
+MODELS_ROOT=/models
+#NVIDIA_VISIBLE_DEVICES=all
+#NVIDIA_DRIVER_CAPABILITIES=all
+
+FASTAPI_CONFIG=development
+CELERY_BROKER_URL=redis://redis:6379/0
+CELERY_RESULT_BACKEND=redis://redis:6379/0
