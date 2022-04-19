@@ -4,7 +4,9 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-gunicorn app.asgi:app -w 1 \
-    -k uvicorn.workers.UvicornWorker \
+gunicorn app.asgi:app -w ${GUNICORN_WORKERS} \
+    --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:8000 \
-    --chdir=/app
+    --chdir=/app \
+    --user ${TWB_USER} \
+    --group ${TWB_GROUP}

@@ -19,7 +19,7 @@ services:
     volumes:
       - /translation-models:/models
     env_file:
-      - .env/.prod
+      - .env/.prod-sample
     depends_on:
       - redis
 
@@ -35,6 +35,6 @@ services:
     volumes:
       - /translation-models:/models
     env_file:
-      - .env/.prod
+      - .env/.prod-sample
     depends_on:
       - redis

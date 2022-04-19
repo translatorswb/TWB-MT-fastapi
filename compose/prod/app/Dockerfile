@@ -6,9 +6,7 @@ ENV VIRTUAL_ENV=/opt/venv \
     TWB_USER=twb \
     TWB_GROUP=twb
 
-#################################
-# Create local user TWB_USER` #
-#################################
+# Create local user TWB_USER
 RUN adduser --disabled-password --gecos '' "$TWB_USER"
 
 RUN python -m venv "$VIRTUAL_ENV"
