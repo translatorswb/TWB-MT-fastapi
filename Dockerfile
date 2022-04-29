@@ -15,7 +15,7 @@ RUN pip install -r /app/requirements.txt \
     && rm -rf /root/.cache/pip
 
 #Custom translator requirements
-#COPY ./app/<customtranslatorname>/ladino/requirements.txt /app/customrequirements.txt
+#COPY ./app/customtranslators/<customtranslatorname>/requirements.txt /app/customrequirements.txt
 #RUN pip install -r /app/ladinorequirements.txt \
 #    && rm -rf /root/.cache/pip
 
