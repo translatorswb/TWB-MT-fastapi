@@ -16,6 +16,11 @@ def translate_text(model_id: str, text: str) -> Optional[str]:
     else:
         sentence_batch = [text]
 
+    # Pre-translate
+    if config.loaded_models[model_id]['pretranslatechain']:
+        for pair in config.loaded_models[model_id]['pretranslatechain']:
+            sentence_batch = config.loaded_models[pair]['translator'](sentence_batch)
+
     # Preprocess
     for proc in config.loaded_models[model_id]['preprocessors']:
         sentence_batch = [proc(s) for s in sentence_batch]

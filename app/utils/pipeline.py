@@ -20,6 +20,7 @@ from app.utils.translators import (
     get_batch_ctranslator,
     get_batch_opustranslator,
     dummy_translator,
+    get_custom_translator,
 )
 from app.utils.utils import (
     capitalizer,
@@ -197,6 +198,9 @@ def load_model_translator(
         elif model_config['model_type'] == 'dummy':
             msg += '-dummy'
             model['translator'] = dummy_translator
+        elif model_config['model_type'] == 'custom':
+            msg += '-custom'
+            model['translator'] = get_custom_translator(model_config['model_path'])
         pipeline_msg.append(msg)
     else:
         model['translator'] = None
