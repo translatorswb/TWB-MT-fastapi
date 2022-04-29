@@ -100,6 +100,32 @@ class Config(metaclass=Singleton):
 
         return pretranslator_chain
 
+    def _get_posttranslators(
+        self, model_config: Dict, model_id: str
+    ) -> Optional[str]:
+        posttranslator_chain = []
+
+        # Check model path
+        if 'posttranslatechain' in model_config and model_config['posttranslatechain']:
+            #check if all pairs are in config
+            for pair in model_config['posttranslatechain']:
+                pair_found = False
+                for m in self.config_data['models']:
+                    m_id = get_model_id(m['src'], m['tgt'])
+                    if m_id == pair and m['load']:
+                        pair_found = True
+                        break
+                if not pair_found: 
+                    self._log_warning(
+                        f'Posttranslation model {pair} not found or is not active. '
+                        f'Can\'t load pretranslator chain for model {model_id}'
+                    )
+                    return posttranslator_chain
+
+            posttranslator_chain = model_config['posttranslatechain']
+
+        return posttranslator_chain
+
     def _is_valid_model_config(self, model_config: Dict) -> bool:
         # Check if model_type src and tgt fields are specified
         for item in ['src', 'tgt', 'model_type']:
@@ -143,11 +169,13 @@ class Config(metaclass=Singleton):
         model_id: str = get_model_id(src, tgt, alt_id)
         model_dir: Optional[str] = self._get_model_path(model_config, model_id)
         pretranslatechain: List[str] = self._get_pretranslators(model_config, model_id)
+        posttranslatechain: List[str] = self._get_posttranslators(model_config, model_id)
         model: Dict = {
             'src': src,
             'tgt': tgt,
             'sentence_segmenter': None,
             'pretranslatechain': pretranslatechain,
+            'posttranslatechain': posttranslatechain,
             'preprocessors': [],
             'postprocessors': [],
         }

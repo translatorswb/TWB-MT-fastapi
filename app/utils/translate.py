@@ -33,6 +33,12 @@ def translate_text(model_id: str, text: str) -> Optional[str]:
     else:
         translated_sentence_batch = sentence_batch
 
+    # Pre-translate
+    if config.loaded_models[model_id]['posttranslatechain']:
+        for pair in config.loaded_models[model_id]['posttranslatechain']:
+            translated_sentence_batch = config.loaded_models[pair]['translator'](translated_sentence_batch)
+
+
     # Postprocess
     tgt_sentences = translated_sentence_batch
     for proc in config.loaded_models[model_id]['postprocessors']:
