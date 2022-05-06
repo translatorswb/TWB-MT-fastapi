@@ -84,3 +84,45 @@ def get_batch_opustranslator(
     if is_tokenizer_loaded and is_model_loaded:
         return translator
     return None
+
+def get_batch_opusbigtranslator(
+    src: str, tgt: str
+) -> Optional[Callable[[str], str]]:
+    from transformers import MarianMTModel, MarianTokenizer
+
+    model_name = f'opus-mt-tc-big-{src}-{tgt}'
+    local_model = os.path.join(MODELS_ROOT_DIR, model_name)
+    remote_model = f'{HELSINKI_NLP}/{model_name}'
+    is_model_loaded, is_tokenizer_loaded = False, False
+
+    def translator(src_texts):
+        if not src_texts:
+            return ''
+        return tokenizer.batch_decode(
+            model.generate(
+                **tokenizer.prepare_seq2seq_batch(
+                    src_texts=src_texts, return_tensors='pt'
+                )
+            ),
+            skip_special_tokens=True,
+        )
+
+    try:
+        tokenizer = MarianTokenizer.from_pretrained(local_model)
+    except OSError:
+        tokenizer = MarianTokenizer.from_pretrained(remote_model)
+        tokenizer.save_pretrained(local_model)
+    finally:
+        is_tokenizer_loaded = True
+
+    try:
+        model = MarianMTModel.from_pretrained(local_model)
+    except OSError:
+        model = MarianMTModel.from_pretrained(remote_model)
+        model.save_pretrained(local_model)
+    finally:
+        is_model_loaded = True
+
+    if is_tokenizer_loaded and is_model_loaded:
+        return translator
+    return None

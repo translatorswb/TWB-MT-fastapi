@@ -118,7 +118,7 @@ class Config(metaclass=Singleton):
                 if not pair_found: 
                     self._log_warning(
                         f'Posttranslation model {pair} not found or is not active. '
-                        f'Can\'t load pretranslator chain for model {model_id}'
+                        f'Can\'t load posttranslator chain for model {model_id}'
                     )
                     return posttranslator_chain
 
