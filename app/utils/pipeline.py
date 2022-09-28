@@ -19,7 +19,9 @@ from app.utils.tokenizers import (
 from app.utils.translators import (
     get_batch_ctranslator,
     get_batch_opustranslator,
+    get_batch_opusbigtranslator,
     dummy_translator,
+    get_custom_translator,
 )
 from app.utils.utils import (
     capitalizer,
@@ -194,9 +196,26 @@ def load_model_translator(
                     f'Failed to load opus-huggingface model for {model_id}. Skipping load.'
                 )
                 raise ModelLoadingException
+        elif model_config['model_type'] == 'opus-big':
+            opus_translator = get_batch_opusbigtranslator(
+                model['src'], model['tgt']
+            )
+            if opus_translator:
+                model['translator'] = get_batch_opusbigtranslator(
+                    model['src'], model['tgt']
+                )
+                msg += '-opusbig-huggingface'
+            else:
+                warn(
+                    f'Failed to load opusbig-huggingface model for {model_id}. Skipping load.'
+                )
+                raise ModelLoadingException
         elif model_config['model_type'] == 'dummy':
             msg += '-dummy'
             model['translator'] = dummy_translator
+        elif model_config['model_type'] == 'custom':
+            msg += '-custom'
+            model['translator'] = get_custom_translator(model_config['model_path'])
         pipeline_msg.append(msg)
     else:
         model['translator'] = None

@@ -16,10 +16,15 @@ def translate_text(model_id: str, text: str) -> Optional[str]:
     else:
         sentence_batch = [text]
 
+    # Pre-translate
+    if config.loaded_models[model_id]['pretranslatechain']:
+        for pair in config.loaded_models[model_id]['pretranslatechain']:
+            sentence_batch = config.loaded_models[pair]['translator'](sentence_batch)
+
     # Preprocess
     for proc in config.loaded_models[model_id]['preprocessors']:
         sentence_batch = [proc(s) for s in sentence_batch]
-
+    
     # Translate batch (ctranslate only)
     if config.loaded_models[model_id]['translator']:
         translated_sentence_batch = config.loaded_models[model_id][
@@ -32,6 +37,11 @@ def translate_text(model_id: str, text: str) -> Optional[str]:
     tgt_sentences = translated_sentence_batch
     for proc in config.loaded_models[model_id]['postprocessors']:
         tgt_sentences = [proc(s) for s in tgt_sentences]
+
+    # Post-translate
+    if config.loaded_models[model_id]['posttranslatechain']:
+        for pair in config.loaded_models[model_id]['posttranslatechain']:
+            tgt_sentences = config.loaded_models[pair]['translator'](tgt_sentences)
 
     tgt_text = ' '.join(tgt_sentences)
 

@@ -14,6 +14,11 @@ COPY ./requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt \
     && rm -rf /root/.cache/pip
 
+#Custom translator requirements
+#COPY ./app/customtranslators/<customtranslatorname>/requirements.txt /app/customrequirements.txt
+#RUN pip install -r /app/customrequirements.txt \
+#    && rm -rf /root/.cache/pip
+
 COPY . /app
 WORKDIR /app
 

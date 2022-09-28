@@ -1,4 +1,5 @@
 import os
+import importlib
 from typing import Optional, Callable
 
 from app.constants import HELSINKI_NLP
@@ -12,6 +13,11 @@ from app.settings import (
 def dummy_translator(content: str) -> str:
     return content
 
+def get_custom_translator(translator_id: str) -> Callable:
+    translator_main_module = importlib.import_module('app.customtranslators.' + translator_id + '.src.interface')
+
+    translator = lambda x: [translator_main_module.translate(i) for i in x] # list IN -> list OUT
+    return translator
 
 def get_ctranslator(ctranslator_model_path: str) -> Callable:
     from ctranslate2 import Translator
@@ -71,6 +77,48 @@ def get_batch_opustranslator(
         model = AutoModelForSeq2SeqLM.from_pretrained(local_model)
     except OSError:
         model = AutoModelForSeq2SeqLM.from_pretrained(remote_model)
+        model.save_pretrained(local_model)
+    finally:
+        is_model_loaded = True
+
+    if is_tokenizer_loaded and is_model_loaded:
+        return translator
+    return None
+
+def get_batch_opusbigtranslator(
+    src: str, tgt: str
+) -> Optional[Callable[[str], str]]:
+    from transformers import MarianMTModel, MarianTokenizer
+
+    model_name = f'opus-mt-tc-big-{src}-{tgt}'
+    local_model = os.path.join(MODELS_ROOT_DIR, model_name)
+    remote_model = f'{HELSINKI_NLP}/{model_name}'
+    is_model_loaded, is_tokenizer_loaded = False, False
+
+    def translator(src_texts):
+        if not src_texts:
+            return ''
+        return tokenizer.batch_decode(
+            model.generate(
+                **tokenizer.prepare_seq2seq_batch(
+                    src_texts=src_texts, return_tensors='pt'
+                )
+            ),
+            skip_special_tokens=True,
+        )
+
+    try:
+        tokenizer = MarianTokenizer.from_pretrained(local_model)
+    except OSError:
+        tokenizer = MarianTokenizer.from_pretrained(remote_model)
+        tokenizer.save_pretrained(local_model)
+    finally:
+        is_tokenizer_loaded = True
+
+    try:
+        model = MarianMTModel.from_pretrained(local_model)
+    except OSError:
+        model = MarianMTModel.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:
         is_model_loaded = True
