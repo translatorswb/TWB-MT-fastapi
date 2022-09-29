@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Optional, Dict, List
 
-from app.constants import SUPPORTED_MODEL_TYPES
+from app.constants import SUPPORTED_MODEL_TYPES, MULTIMODALCODE
 from app.exceptions import ConfigurationException, ModelLoadingException
 from app.helpers.singleton import Singleton
 from app.settings import (
@@ -27,6 +27,7 @@ class Config(metaclass=Singleton):
         load_all_models: bool = False,
     ):
         self.loaded_models: Dict = {}
+        self.loaded_multilingual_models: Dict = {}
         self.language_codes: Dict = {}
         self.languages_list: Dict = {}
         self.config_data: Dict = config_data or {}
@@ -85,7 +86,7 @@ class Config(metaclass=Singleton):
             for pair in model_config['pretranslatechain']:
                 pair_found = False
                 for m in self.config_data['models']:
-                    m_id = get_model_id(m['src'], m['tgt'])
+                    m_id = get_model_id(m['model_type'], m['src'], m['tgt'])
                     if m_id == pair and m['load']:
                         pair_found = True
                         break
@@ -111,7 +112,7 @@ class Config(metaclass=Singleton):
             for pair in model_config['posttranslatechain']:
                 pair_found = False
                 for m in self.config_data['models']:
-                    m_id = get_model_id(m['src'], m['tgt'])
+                    m_id = get_model_id(m['model_type'], m['src'], m['tgt'])
                     if m_id == pair and m['load']:
                         pair_found = True
                         break
@@ -128,12 +129,18 @@ class Config(metaclass=Singleton):
 
     def _is_valid_model_config(self, model_config: Dict) -> bool:
         # Check if model_type src and tgt fields are specified
-        for item in ['src', 'tgt', 'model_type']:
-            if item not in model_config:
-                self._log_warning(
+        if 'model_type' not in model_config:
+            self._log_warning(
                     f'`{item}` not speficied for a model. Skipping load'
                 )
-                return False
+            return False
+        if 'multilingual' not in model_config or not model_config['multilingual']:
+            for item in ['src', 'tgt']:
+                if item not in model_config:
+                    self._log_warning(
+                        f'`{item}` not speficied for a model. Skipping load'
+                    )
+                    return False
         return True
 
     def _is_valid_model_type(self, model_type: str) -> bool:
@@ -161,16 +168,23 @@ class Config(metaclass=Singleton):
             except ModelLoadingException:
                 continue
 
+        self._log_info('regular models ' + str(self.loaded_models))
+        self._log_info('multi models ' + str(self.loaded_multilingual_models))
+
     def _load_model(self, model_config: Dict) -> None:
-        src: str = model_config['src']
-        tgt: str = model_config['tgt']
+        model_type: str = model_config.get('model_type')
+        src: Optional[str] = model_config['src'] if 'src' in model_config else MULTIMODALCODE
+        tgt: Optional[str] = model_config['tgt'] if 'src' in model_config else MULTIMODALCODE
         alt_id: Optional[str] = model_config.get('alt')
+        multilingual: Optional[bool] = model_config['multilingual'] if 'multilingual' in model_config else False
         pipeline_msg: List[str] = []
         model_id: str = get_model_id(src, tgt, alt_id)
         model_dir: Optional[str] = self._get_model_path(model_config, model_id)
         pretranslatechain: List[str] = self._get_pretranslators(model_config, model_id)
         posttranslatechain: List[str] = self._get_posttranslators(model_config, model_id)
         model: Dict = {
+            'model_type': model_type,
+            'multilingual': multilingual,
             'src': src,
             'tgt': tgt,
             'sentence_segmenter': None,
@@ -206,7 +220,10 @@ class Config(metaclass=Singleton):
         self._log_info(f"Model: {model_id} ( {' '.join(pipeline_msg)} )")
 
         # All good, add model to the list
-        self.loaded_models[model_id] = model
+        if not multilingual:
+            self.loaded_models[model_id] = model
+        else:
+            self.loaded_multilingual_models[model_id] = model
 
     def _load_language_codes(self) -> None:
         if 'languages' in self.config_data:
@@ -219,6 +236,7 @@ class Config(metaclass=Singleton):
 
     def _load_languages_list(self) -> None:
         for model_id in self.loaded_models.keys():
+            parsed_id = parse_model_id(model_id)
             if not (parsed_id := parse_model_id(model_id)):
                 self._log_warning(f'Unable to parse model_id of {model_id}')
                 continue
@@ -276,12 +294,12 @@ class Config(metaclass=Singleton):
         if not src in self.language_codes:
             self._log_warning(
                 f'Source language code `{src}` not defined in '
-                'languages dict. This will surely break something.'
+                'languages dict. This might break something.'
             )
         if not tgt in self.language_codes:
             self._log_warning(
                 f'Target language code `{tgt}` not defined in '
-                'languages dict. This will surely break something.'
+                'languages dict. This might break something.'
             )
 
     def _validate_model_conflicts(

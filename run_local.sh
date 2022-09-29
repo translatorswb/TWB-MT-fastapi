@@ -1,3 +1,3 @@
 export MT_API_CONFIG=config.json
 export MODELS_ROOT=../translation-models
-uvicorn main:app --reload --port 8030
+uvicorn main:app --reload --port 8001 --log-config logging.yml
