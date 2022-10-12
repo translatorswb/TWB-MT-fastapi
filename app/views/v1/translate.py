@@ -14,16 +14,16 @@ from app.constants import NLLB_LANGS_DICT, MULTIMODALCODE
 
 translate_v1 = APIRouter(prefix='/api/v1/translate')
 
-@translate_v1.post("", status_code=status.HTTP_200_OK)
-@translate_v1.post('/', status_code=status.HTTP_200_OK)
-async def translate_sentence(
-    request: TranslationRequest,
-) -> TranslationResponse:
+DEVDEBUG = False
+
+def fetch_model_data_from_request(request):
     config = Config()
 
     src = config.map_lang_to_closest(request.src)
     tgt = config.map_lang_to_closest(request.tgt)
-    use_multi = request.use_multi
+    use_multi = True if request.use_multi == 'True' else False
+
+    if DEVDEBUG: print('use_multi', use_multi)
 
     #Get regular model_id
     model_id = get_model_id(
@@ -32,88 +32,65 @@ async def translate_sentence(
         alt_id=request.alt
     )
 
-    regular_model_exists = model_id in config.loaded_models
-    multilingual_model_exists = config.loaded_multilingual_models
+    compatible_model_ids = config._lookup_pair_in_languages_list(src, tgt, request.alt)
 
-    if use_multi and multilingual_model_exists:
-        print("Using multilingual")
-        use_multi = True
-        model_id = get_model_id(src=MULTIMODALCODE,
-                                tgt=MULTIMODALCODE,
-                                alt_id=request.alt)
-    elif use_multi and not multilingual_model_exists:
+    if DEVDEBUG: print('compatible_model_ids', compatible_model_ids)
+
+    if not compatible_model_ids:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'No multilingual exists. Remove flag `use_multi` from request',
-        )
-    else:
-        #Prioritize regular model if there's any
-        if regular_model_exists:
-            print(f"Regular model found for {model_id}")
-        elif multilingual_model_exists:
-            use_multi = True
-            model_id = get_model_id(src=MULTIMODALCODE,
-                                tgt=MULTIMODALCODE,
-                                alt_id=request.alt)
-        else:
-            raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f'Language pair {model_id} is not supported.',
             )
+    
+    regular_model_exists = model_id in config.loaded_models
+    multilingual_model_exists_for_pair = any([mid.startswith(MULTIMODALCODE) for mid in compatible_model_ids])
+
+    if not regular_model_exists and not use_multi and multilingual_model_exists_for_pair:
+        use_multi = True
 
     if use_multi:
-        if model_id not in config.loaded_multilingual_models and request.alt:
+        if multilingual_model_exists_for_pair:
+            #fetch multimodal 
+            model_id = get_model_id(src=MULTIMODALCODE,
+                                    tgt=MULTIMODALCODE,
+                                    alt_id=request.alt)
+        else:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f'No multilingual model with alt id {request.alt} found.',
-            )
-        if not src in NLLB_LANGS_DICT:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f'Language {src} is not supported.',
-            )
-        if not tgt in NLLB_LANGS_DICT:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f'Language {tgt} is not supported.',
-            )
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f'No multilingual model support for pair {src}-{tgt}. Remove flag `use_multi` from request',
+        )
 
-    translation = translate_text(model_id, request.text, src, tgt, use_multi)
+    return model_id, src, tgt
+
+@translate_v1.post("", status_code=status.HTTP_200_OK)
+@translate_v1.post('/', status_code=status.HTTP_200_OK)
+async def translate_sentence(
+    request: TranslationRequest,
+) -> TranslationResponse:
+
+    model_id, src, tgt = fetch_model_data_from_request(request)
+
+    translation = translate_text(model_id, request.text, src, tgt)
 
     return TranslationResponse(translation=translation)
 
-#TODO: NOT REVISED WRT TO NEW MULTILINGUAL IMPLEMENTATION
 @translate_v1.post('/batch', status_code=status.HTTP_200_OK)
 async def translate_batch(
     request: BatchTranslationRequest,
 ) -> BatchTranslationResponse:
     config = Config()
 
-    src = config.map_lang_to_closest(request.src)
-    tgt = config.map_lang_to_closest(request.tgt)
-
-    model_id = get_model_id(#request.model_type,
-        src=src,
-        tgt=tgt,
-        alt_id=request.alt#,
-        #multilingual
-    )
-
-    if not model_id in config.loaded_models:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Language pair {model_id} is not supported.',
-        )
+    model_id, src, tgt = fetch_model_data_from_request(request)
 
     translated_batch = []
     for sentence in request.texts:
-        translation = translate_text(model_id, sentence)
+        translation = translate_text(model_id, sentence, src, tgt)
         translated_batch.append(translation)
-    #translated_batch = translate_text(model_id, request.texts)
+    
+    #TODO: translated_batch = translate_text(model_id, request.texts)
 
     return BatchTranslationResponse(translation=translated_batch)
 
-#TODO: NOT REVISED WRT TO NEW MULTILINGUAL IMPLEMENTATION
 @translate_v1.get('', status_code=status.HTTP_200_OK)
 @translate_v1.get('/', status_code=status.HTTP_200_OK)
 async def languages() -> LanguagesResponse:

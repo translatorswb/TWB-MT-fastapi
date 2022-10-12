@@ -45,7 +45,7 @@ def get_batch_ctranslator(ctranslator_model_path: str) -> Callable:
 def get_batch_opustranslator(
     src: str, tgt: str
 ) -> Optional[Callable[[str], str]]:
-    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+    from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
     model_name = f'opus-mt-{src}-{tgt}'
     local_model = os.path.join(MODELS_ROOT_DIR, model_name)
@@ -53,21 +53,14 @@ def get_batch_opustranslator(
     is_model_loaded, is_tokenizer_loaded = False, False
 
     def translator(src_texts, src=None, tgt=None):
-        print('get_batch_opustranslator/translator', src_texts)
         if not src_texts:
             return ''
-        return tokenizer.batch_decode(
-            model.generate(
-                **tokenizer.prepare_seq2seq_batch(
-                    src_texts=src_texts, return_tensors='pt'
-                )
-            ),
-            skip_special_tokens=True,
-        )
+        return [translator_pipeline(text, max_length=400)[0]["translation_text"] 
+                    for text in src_texts]
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(local_model)
-    except OSError:
+    except Exception as e:
         tokenizer = AutoTokenizer.from_pretrained(remote_model)
         tokenizer.save_pretrained(local_model)
     finally:
@@ -75,10 +68,11 @@ def get_batch_opustranslator(
 
     try:
         model = AutoModelForSeq2SeqLM.from_pretrained(local_model)
-    except OSError:
+    except Exception as e:
         model = AutoModelForSeq2SeqLM.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:
+        translator_pipeline = pipeline("translation", model=model, tokenizer=tokenizer)
         is_model_loaded = True
 
     if is_tokenizer_loaded and is_model_loaded:
@@ -109,7 +103,8 @@ def get_batch_opusbigtranslator(
 
     try:
         tokenizer = MarianTokenizer.from_pretrained(local_model)
-    except OSError:
+    except Exception as e:
+        print(e)
         tokenizer = MarianTokenizer.from_pretrained(remote_model)
         tokenizer.save_pretrained(local_model)
     finally:
@@ -117,7 +112,8 @@ def get_batch_opusbigtranslator(
 
     try:
         model = MarianMTModel.from_pretrained(local_model)
-    except OSError:
+    except Exception as e:
+        print(e)
         model = MarianMTModel.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:
@@ -142,11 +138,10 @@ def get_batch_nllbtranslator() -> Optional[Callable[[str], str]]:
         nllb_src = NLLB_LANGS_DICT.get(src)
         nllb_tgt = NLLB_LANGS_DICT.get(tgt)
 
-        print(f'get_batch_nllbtranslator/translator {nllb_src}-{nllb_tgt}', src_texts)
-
         if not src_texts:
             return ''
         else:
+            #pipeline was here
             nllb_translator = pipeline(
                 "translation",
                 model=model,
@@ -160,7 +155,8 @@ def get_batch_nllbtranslator() -> Optional[Callable[[str], str]]:
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(local_model)
-    except Exception as e: #TODO need to change this exception type
+    except Exception as e:
+        print(e)
         tokenizer = AutoTokenizer.from_pretrained(remote_model)
         tokenizer.save_pretrained(local_model)
     finally:
@@ -169,6 +165,7 @@ def get_batch_nllbtranslator() -> Optional[Callable[[str], str]]:
     try:
         model = AutoModelForSeq2SeqLM.from_pretrained(local_model)
     except Exception as e: 
+        print(e)
         model = AutoModelForSeq2SeqLM.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:

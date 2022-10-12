@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Optional, Dict, List
 
-from app.constants import SUPPORTED_MODEL_TYPES, MULTIMODALCODE
+from app.constants import SUPPORTED_MODEL_TYPES, MULTIMODALCODE, MODEL_TAG_SEPARATOR
 from app.exceptions import ConfigurationException, ModelLoadingException
 from app.helpers.singleton import Singleton
 from app.settings import (
@@ -27,7 +27,6 @@ class Config(metaclass=Singleton):
         load_all_models: bool = False,
     ):
         self.loaded_models: Dict = {}
-        self.loaded_multilingual_models: Dict = {}
         self.language_codes: Dict = {}
         self.languages_list: Dict = {}
         self.config_data: Dict = config_data or {}
@@ -168,8 +167,7 @@ class Config(metaclass=Singleton):
             except ModelLoadingException:
                 continue
 
-        self._log_info('regular models ' + str(self.loaded_models))
-        self._log_info('multi models ' + str(self.loaded_multilingual_models))
+        self._log_info(f'{len(self.loaded_models)} models ' + str(list(self.loaded_models.keys())))
 
     def _load_model(self, model_config: Dict) -> None:
         model_type: str = model_config.get('model_type')
@@ -177,6 +175,7 @@ class Config(metaclass=Singleton):
         tgt: Optional[str] = model_config['tgt'] if 'src' in model_config else MULTIMODALCODE
         alt_id: Optional[str] = model_config.get('alt')
         multilingual: Optional[bool] = model_config['multilingual'] if 'multilingual' in model_config else False
+        supported_pairs: List[str] = model_config['supported_pairs'] if 'supported_pairs' in model_config else []
         pipeline_msg: List[str] = []
         model_id: str = get_model_id(src, tgt, alt_id)
         model_dir: Optional[str] = self._get_model_path(model_config, model_id)
@@ -185,6 +184,7 @@ class Config(metaclass=Singleton):
         model: Dict = {
             'model_type': model_type,
             'multilingual': multilingual,
+            'supported_pairs': supported_pairs,
             'src': src,
             'tgt': tgt,
             'sentence_segmenter': None,
@@ -220,33 +220,66 @@ class Config(metaclass=Singleton):
         self._log_info(f"Model: {model_id} ( {' '.join(pipeline_msg)} )")
 
         # All good, add model to the list
-        if not multilingual:
-            self.loaded_models[model_id] = model
-        else:
-            self.loaded_multilingual_models[model_id] = model
+        self.loaded_models[model_id] = model
 
     def _load_language_codes(self) -> None:
         if 'languages' in self.config_data:
             self.language_codes = self.config_data['languages']
-            logger.debug(f'Languages: {self.language_codes}')
+            self.language_codes[MULTIMODALCODE] = "Multilingual"
+            logger.debug(f'Language names: {self.language_codes}')
         else:
             self._log_warning(
                 "Language name spefication dictionary ('languages') not found in configuration."
             )
 
     def _load_languages_list(self) -> None:
-        for model_id in self.loaded_models.keys():
-            parsed_id = parse_model_id(model_id)
-            if not (parsed_id := parse_model_id(model_id)):
-                self._log_warning(f'Unable to parse model_id of {model_id}')
+        for main_model_id in self.loaded_models.keys():
+            main_parsed_id = parse_model_id(main_model_id)
+            if not (main_parsed_id := parse_model_id(main_model_id)):
+                self._log_warning(f'Unable to parse model_id of {main_model_id}')
                 continue
-            source, target, alt = parsed_id
-            if not source in self.languages_list:
-                self.languages_list[source] = {}
-            if not target in self.languages_list[source]:
-                self.languages_list[source][target] = []
 
-            self.languages_list[source][target].append(model_id)
+            source_main, target_main, alt_main = main_parsed_id
+
+            models_to_add = [] #(model_id, source, target, alt)
+
+            if self.loaded_models[main_model_id]['multilingual']:
+                for model_id in self.loaded_models[main_model_id]['supported_pairs']:
+                    parsed_id = parse_model_id(model_id)
+                    if not (parsed_id := parse_model_id(model_id)):
+                        self._log_warning(f'Unable to parse multilingual model pair {model_id} of {main_model_id}')
+                        continue
+                    source, target, alt = parsed_id
+
+                    if alt_main:
+                        multimodel_code = MULTIMODALCODE + MODEL_TAG_SEPARATOR + model_id + MODEL_TAG_SEPARATOR + alt_main
+                    else:
+                        multimodel_code = MULTIMODALCODE + MODEL_TAG_SEPARATOR + model_id
+
+                    models_to_add.append((multimodel_code, source, target, alt))
+            else:
+                models_to_add.append((main_model_id, source_main, target_main, alt_main))
+
+            for model_info in models_to_add:
+                model_id, source, target, alt = model_info
+                if not source in self.languages_list:
+                    self.languages_list[source] = {}
+                if not target in self.languages_list[source]:
+                    self.languages_list[source][target] = []
+
+                self.languages_list[source][target].append(model_id)
+
+        logger.debug(f'Languages list: {self.languages_list}')
+
+    def _lookup_pair_in_languages_list(self, src, tgt, alt=None):
+        if src in self.languages_list:
+            if tgt in self.languages_list[src]:
+                if self.languages_list[src][tgt]:
+                    if alt:
+                        return [mid for mid in self.languages_list[src][tgt] if mid.endswith(alt)]
+                    else:
+                        return self.languages_list[src][tgt]
+        return []
 
     def _log_warning(self, msg: str) -> None:
         logger.warning(msg)

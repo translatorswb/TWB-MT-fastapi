@@ -15,6 +15,7 @@ class BatchTranslationRequest(BaseModel):
     src: str
     tgt: str
     alt: Optional[str] = None
+    use_multi: Optional[str] = None
     texts: List[str]
 
 
