@@ -82,7 +82,7 @@ def get_batch_opustranslator(
 def get_batch_opusbigtranslator(
     src: str, tgt: str
 ) -> Optional[Callable[[str], str]]:
-    from transformers import MarianMTModel, MarianTokenizer
+    from transformers import MarianMTModel, MarianTokenizer, pipeline
 
     model_name = f'opus-mt-tc-big-{src}-{tgt}'
     local_model = os.path.join(MODELS_ROOT_DIR, model_name)
@@ -92,14 +92,8 @@ def get_batch_opusbigtranslator(
     def translator(src_texts, src=None, tgt=None):
         if not src_texts:
             return ''
-        return tokenizer.batch_decode(
-            model.generate(
-                **tokenizer.prepare_seq2seq_batch(
-                    src_texts=src_texts, return_tensors='pt'
-                )
-            ),
-            skip_special_tokens=True,
-        )
+        return [translator_pipeline(text, max_length=400)[0]["translation_text"] 
+                    for text in src_texts]
 
     try:
         tokenizer = MarianTokenizer.from_pretrained(local_model)
@@ -117,6 +111,7 @@ def get_batch_opusbigtranslator(
         model = MarianMTModel.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:
+        translator_pipeline = pipeline("translation", model=model, tokenizer=tokenizer)
         is_model_loaded = True
 
     if is_tokenizer_loaded and is_model_loaded:
