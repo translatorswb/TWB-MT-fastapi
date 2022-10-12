@@ -85,6 +85,9 @@ class Config(metaclass=Singleton):
             for pair in model_config['pretranslatechain']:
                 pair_found = False
                 for m in self.config_data['models']:
+                    #TODO
+                    if 'multilingual' in m and m['multilingual']:
+                        continue
                     m_id = get_model_id(m['model_type'], m['src'], m['tgt'])
                     if m_id == pair and m['load']:
                         pair_found = True
