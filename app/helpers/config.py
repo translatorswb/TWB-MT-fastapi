@@ -231,7 +231,7 @@ class Config(metaclass=Singleton):
     def _load_language_codes(self) -> None:
         if 'languages' in self.config_data:
             self.language_codes = self.config_data['languages']
-            self.language_codes[MULTIMODALCODE] = "Multilingual"
+            #self.language_codes[MULTIMODALCODE] = "Multilingual"
             self._log_info(f'Language names: {self.language_codes}')
         else:
             self._log_warning(
