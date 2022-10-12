@@ -22,9 +22,13 @@ def get_ctranslator(ctranslator_model_path: str) -> Callable:
     from ctranslate2 import Translator
 
     ctranslator = Translator(ctranslator_model_path)
-    translator = lambda x: ctranslator.translate_batch([x])[0][0][
-        'tokens'
-    ]  # list IN -> list OUT
+    # translator = lambda x: ctranslator.translate_batch([x])[0][0][
+    #     'tokens'
+    # ]  
+
+    def translator(text, src=None, tgt=None):
+        return ctranslator.translate_batch([text])[0][0]['tokens']
+
     return translator
 
 
@@ -36,9 +40,13 @@ def get_batch_ctranslator(ctranslator_model_path: str) -> Callable:
         device=CTRANSLATE_DEVICE,
         inter_threads=CTRANSLATE_INTER_THREADS,
     )
-    translator = lambda x: [
-        s[0]['tokens'] for s in ctranslator.translate_batch(x)
-    ]
+    # translator = lambda x: [
+    #     s[0]['tokens'] for s in ctranslator.translate_batch(x)
+    # ]
+
+    def translator(src_texts, src=None, tgt=None):
+        return [s[0]['tokens'] for s in ctranslator.translate_batch(src_texts)]
+
     return translator
 
 

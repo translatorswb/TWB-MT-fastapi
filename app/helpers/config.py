@@ -226,7 +226,7 @@ class Config(metaclass=Singleton):
         if 'languages' in self.config_data:
             self.language_codes = self.config_data['languages']
             self.language_codes[MULTIMODALCODE] = "Multilingual"
-            logger.debug(f'Language names: {self.language_codes}')
+            self._log_info(f'Language names: {self.language_codes}')
         else:
             self._log_warning(
                 "Language name spefication dictionary ('languages') not found in configuration."
@@ -269,7 +269,7 @@ class Config(metaclass=Singleton):
 
                 self.languages_list[source][target].append(model_id)
 
-        logger.debug(f'Languages list: {self.languages_list}')
+        self._log_info(f'Languages list: {self.languages_list}')
 
     def _lookup_pair_in_languages_list(self, src, tgt, alt=None):
         if src in self.languages_list:
