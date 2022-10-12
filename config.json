@@ -18,7 +18,7 @@
       "multilingual": true,
       "load": true,
       "sentence_split": "nltk",
-      "supported_pairs": ["en-kr", "en-fr", "en-tr", "en-ff"],
+      "supported_pairs": ["en-kr", "en-fr", "en-ff", "en-ha"],
       "pipeline": {
           "translate": true
       }
@@ -27,7 +27,7 @@
       "src": "en",
       "tgt": "uk",
       "model_type": "opus",
-      "load": false,
+      "load": true,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -39,7 +39,7 @@
       "src": "uk",
       "tgt": "en",
       "model_type": "opus",
-      "load": false,
+      "load": true,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -51,7 +51,7 @@
       "src": "fr",
       "tgt": "en",
       "model_type": "opus",
-      "load": false,
+      "load": true,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -118,7 +118,7 @@
       "model_type": "ctranslator2",
       "model_path": "frsw",
       "bpe_file": "BPE-mtedmix-6000.codes",
-      "load": false,
+      "load": true,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -134,7 +134,7 @@
       "model_type": "ctranslator2",
       "model_path": "swfr",
       "bpe_file": "BPE-monomix-6000.codes",
-      "load": false,
+      "load": true,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -150,7 +150,7 @@
       "model_type": "ctranslator2",
       "model_path": "tien",
       "bpe_file": "BPE-bigmix3a-6000.codes",
-      "load": false,
+      "load": true,
       "sentence_split": [
         "፧",
         "።",
@@ -178,7 +178,7 @@
       "model_type": "ctranslator2",
       "model_path": "enti_adapt",
       "bpe_file": "codes_file6000_en",
-      "load": false,
+      "load": true,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -194,7 +194,7 @@
       "model_type": "ctranslator2",
       "model_path": "levar-en",
       "bpe_file": "levarmix.train.mtok.low.bpe-5000.codes",
-      "load": false,
+      "load": true,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
