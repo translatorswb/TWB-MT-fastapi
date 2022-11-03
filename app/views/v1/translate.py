@@ -14,7 +14,7 @@ from app.constants import NLLB_LANGS_DICT, MULTIMODALCODE
 
 translate_v1 = APIRouter(prefix='/api/v1/translate')
 
-DEVDEBUG = False
+DEVDEBUG = True
 
 def fetch_model_data_from_request(request):
     config = Config()
@@ -59,6 +59,8 @@ def fetch_model_data_from_request(request):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'No multilingual model support for pair {src}-{tgt}. Remove flag `use_multi` from request',
         )
+
+    if DEVDEBUG: print('model_id', model_id)
 
     return model_id, src, tgt
 

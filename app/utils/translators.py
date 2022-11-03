@@ -6,6 +6,7 @@ from app.constants import HELSINKI_NLP, NLLB_LANGS_DICT
 from app.settings import (
     CTRANSLATE_DEVICE,
     CTRANSLATE_INTER_THREADS,
+    TRANSFORMERS_DEVICE,
     MODELS_ROOT_DIR,
 )
 
@@ -80,7 +81,7 @@ def get_batch_opustranslator(
         model = AutoModelForSeq2SeqLM.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:
-        translator_pipeline = pipeline("translation", model=model, tokenizer=tokenizer)
+        translator_pipeline = pipeline("translation", model=model, tokenizer=tokenizer, device=TRANSFORMERS_DEVICE)
         is_model_loaded = True
 
     if is_tokenizer_loaded and is_model_loaded:
@@ -119,7 +120,7 @@ def get_batch_opusbigtranslator(
         model = MarianMTModel.from_pretrained(remote_model)
         model.save_pretrained(local_model)
     finally:
-        translator_pipeline = pipeline("translation", model=model, tokenizer=tokenizer)
+        translator_pipeline = pipeline("translation", model=model, tokenizer=tokenizer, device=TRANSFORMERS_DEVICE)
         is_model_loaded = True
 
     if is_tokenizer_loaded and is_model_loaded:
@@ -151,6 +152,7 @@ def get_batch_nllbtranslator() -> Optional[Callable[[str], str]]:
                 tokenizer=tokenizer,
                 src_lang=nllb_src,
                 tgt_lang=nllb_tgt,
+                device=TRANSFORMERS_DEVICE
             )
 
             return [nllb_translator(text, max_length=400)[0]["translation_text"] 
