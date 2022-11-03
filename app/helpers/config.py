@@ -85,7 +85,10 @@ class Config(metaclass=Singleton):
             for pair in model_config['pretranslatechain']:
                 pair_found = False
                 for m in self.config_data['models']:
-                    m_id = get_model_id(m['model_type'], m['src'], m['tgt'])
+                    #TODO
+                    if 'multilingual' in m and m['multilingual']:
+                        continue
+                    m_id = get_model_id(src=m['src'], tgt=m['tgt'])
                     if m_id == pair and m['load']:
                         pair_found = True
                         break
@@ -111,7 +114,10 @@ class Config(metaclass=Singleton):
             for pair in model_config['posttranslatechain']:
                 pair_found = False
                 for m in self.config_data['models']:
-                    m_id = get_model_id(m['model_type'], m['src'], m['tgt'])
+                    #TODO
+                    if 'multilingual' in m and m['multilingual']:
+                        continue
+                    m_id = get_model_id(src=m['src'], tgt=m['tgt'])
                     if m_id == pair and m['load']:
                         pair_found = True
                         break
@@ -177,7 +183,7 @@ class Config(metaclass=Singleton):
         multilingual: Optional[bool] = model_config['multilingual'] if 'multilingual' in model_config else False
         supported_pairs: List[str] = model_config['supported_pairs'] if 'supported_pairs' in model_config else []
         pipeline_msg: List[str] = []
-        model_id: str = get_model_id(src, tgt, alt_id)
+        model_id: str = get_model_id(src=src, tgt=tgt, alt_id=alt_id)
         model_dir: Optional[str] = self._get_model_path(model_config, model_id)
         pretranslatechain: List[str] = self._get_pretranslators(model_config, model_id)
         posttranslatechain: List[str] = self._get_posttranslators(model_config, model_id)
@@ -225,7 +231,7 @@ class Config(metaclass=Singleton):
     def _load_language_codes(self) -> None:
         if 'languages' in self.config_data:
             self.language_codes = self.config_data['languages']
-            self.language_codes[MULTIMODALCODE] = "Multilingual"
+            #self.language_codes[MULTIMODALCODE] = "Multilingual"
             self._log_info(f'Language names: {self.language_codes}')
         else:
             self._log_warning(

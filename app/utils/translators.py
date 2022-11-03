@@ -16,7 +16,11 @@ def dummy_translator(content: str) -> str:
 def get_custom_translator(translator_id: str) -> Callable:
     translator_main_module = importlib.import_module('app.customtranslators.' + translator_id + '.src.interface')
 
-    translator = lambda x: [translator_main_module.translate(i) for i in x] # list IN -> list OUT
+    # translator = lambda x: [translator_main_module.translate(i) for i in x] # list IN -> list OUT
+
+    def translator(texts, src=None, tgt=None):
+        return [translator_main_module.translate(i) for i in texts]
+
     return translator
 
 def get_ctranslator(ctranslator_model_path: str) -> Callable:
