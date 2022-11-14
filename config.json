@@ -27,7 +27,7 @@
       "src": "en",
       "tgt": "uk",
       "model_type": "opus",
-      "load": true,
+      "load": false,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -39,7 +39,7 @@
       "src": "uk",
       "tgt": "en",
       "model_type": "opus",
-      "load": true,
+      "load": false,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -51,7 +51,7 @@
       "src": "fr",
       "tgt": "en",
       "model_type": "opus",
-      "load": true,
+      "load": false,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
@@ -63,7 +63,7 @@
       "src": "en",
       "tgt": "fr",
       "model_type": "opus",
-      "load": true,
+      "load": false,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,

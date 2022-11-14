@@ -2,7 +2,7 @@ import os
 import importlib
 from typing import Optional, Callable
 
-from app.constants import HELSINKI_NLP, NLLB_LANGS_DICT
+from app.constants import HELSINKI_NLP, NLLB_LANGS_DICT, NLLB_MODEL_TYPE
 from app.settings import (
     CTRANSLATE_DEVICE,
     CTRANSLATE_INTER_THREADS,
@@ -136,9 +136,9 @@ def get_batch_nllbtranslator() -> Optional[Callable[[str], str]]:
 
     from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
-    model_name = 'nllb-distilled-600M'
+    model_name = NLLB_MODEL_TYPE
     local_model = os.path.join(MODELS_ROOT_DIR, model_name)
-    remote_model = "facebook/nllb-200-distilled-600M"
+    remote_model = "facebook/" + NLLB_MODEL_TYPE
 
     is_model_loaded, is_tokenizer_loaded = False, False
 
@@ -182,5 +182,6 @@ def get_batch_nllbtranslator() -> Optional[Callable[[str], str]]:
 
 
     if is_tokenizer_loaded and is_model_loaded:
+        print("Loaded NLLB model", remote_model)
         return translator
     return None

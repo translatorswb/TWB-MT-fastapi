@@ -23,8 +23,6 @@ def fetch_model_data_from_request(request):
     tgt = config.map_lang_to_closest(request.tgt)
     use_multi = True if request.use_multi == 'True' else False
 
-    if DEVDEBUG: print('use_multi', use_multi)
-
     #Get regular model_id
     model_id = get_model_id(
         src=src,
@@ -34,13 +32,16 @@ def fetch_model_data_from_request(request):
 
     compatible_model_ids = config._lookup_pair_in_languages_list(src, tgt, request.alt)
 
-    if DEVDEBUG: print('compatible_model_ids', compatible_model_ids)
-
     if not compatible_model_ids:
         raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=406,
                 detail=f'Language pair {model_id} is not supported.',
             )
+
+    if DEVDEBUG: 
+        print('compatible_model_ids', compatible_model_ids)
+        if use_multi:
+            print('use_multi', use_multi)
     
     regular_model_exists = model_id in config.loaded_models
     multilingual_model_exists_for_pair = any([mid.startswith(MULTIMODALCODE) for mid in compatible_model_ids])
