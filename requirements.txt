@@ -6,4 +6,4 @@ sacremoses==0.0.47
 nltk==3.7
 sentencepiece==0.1.96
 torch==1.10.0
-transformers==4.16.2
+transformers==4.23.1

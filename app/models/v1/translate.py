@@ -7,6 +7,7 @@ class TranslationRequest(BaseModel):
     src: str
     tgt: str
     alt: Optional[str] = None
+    use_multi: Optional[str] = None
     text: str
 
 
@@ -14,6 +15,7 @@ class BatchTranslationRequest(BaseModel):
     src: str
     tgt: str
     alt: Optional[str] = None
+    use_multi: Optional[str] = None
     texts: List[str]
 
 

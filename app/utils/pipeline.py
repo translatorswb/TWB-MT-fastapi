@@ -20,6 +20,7 @@ from app.utils.translators import (
     get_batch_ctranslator,
     get_batch_opustranslator,
     get_batch_opusbigtranslator,
+    get_batch_nllbtranslator,
     dummy_translator,
     get_custom_translator,
 )
@@ -187,9 +188,7 @@ def load_model_translator(
                 model['src'], model['tgt']
             )
             if opus_translator:
-                model['translator'] = get_batch_opustranslator(
-                    model['src'], model['tgt']
-                )
+                model['translator'] = opus_translator
                 msg += '-opus-huggingface'
             else:
                 warn(
@@ -201,13 +200,21 @@ def load_model_translator(
                 model['src'], model['tgt']
             )
             if opus_translator:
-                model['translator'] = get_batch_opusbigtranslator(
-                    model['src'], model['tgt']
-                )
+                model['translator'] = opus_translator
                 msg += '-opusbig-huggingface'
             else:
                 warn(
                     f'Failed to load opusbig-huggingface model for {model_id}. Skipping load.'
+                )
+                raise ModelLoadingException
+        elif model_config['model_type'] == 'nllb':
+            opus_translator = get_batch_nllbtranslator()
+            if opus_translator:
+                model['translator'] = opus_translator
+                msg += '-nllb-huggingface'
+            else:
+                warn(
+                    f'Failed to load nllb-huggingface model for {model_id}. Skipping load.'
                 )
                 raise ModelLoadingException
         elif model_config['model_type'] == 'dummy':

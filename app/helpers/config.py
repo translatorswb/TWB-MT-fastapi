@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Optional, Dict, List
 
-from app.constants import SUPPORTED_MODEL_TYPES
+from app.constants import SUPPORTED_MODEL_TYPES, MULTIMODALCODE, MODEL_TAG_SEPARATOR
 from app.exceptions import ConfigurationException, ModelLoadingException
 from app.helpers.singleton import Singleton
 from app.settings import (
@@ -85,7 +85,10 @@ class Config(metaclass=Singleton):
             for pair in model_config['pretranslatechain']:
                 pair_found = False
                 for m in self.config_data['models']:
-                    m_id = get_model_id(m['src'], m['tgt'])
+                    #TODO
+                    if 'multilingual' in m and m['multilingual']:
+                        continue
+                    m_id = get_model_id(src=m['src'], tgt=m['tgt'])
                     if m_id == pair and m['load']:
                         pair_found = True
                         break
@@ -111,7 +114,10 @@ class Config(metaclass=Singleton):
             for pair in model_config['posttranslatechain']:
                 pair_found = False
                 for m in self.config_data['models']:
-                    m_id = get_model_id(m['src'], m['tgt'])
+                    #TODO
+                    if 'multilingual' in m and m['multilingual']:
+                        continue
+                    m_id = get_model_id(src=m['src'], tgt=m['tgt'])
                     if m_id == pair and m['load']:
                         pair_found = True
                         break
@@ -128,12 +134,18 @@ class Config(metaclass=Singleton):
 
     def _is_valid_model_config(self, model_config: Dict) -> bool:
         # Check if model_type src and tgt fields are specified
-        for item in ['src', 'tgt', 'model_type']:
-            if item not in model_config:
-                self._log_warning(
+        if 'model_type' not in model_config:
+            self._log_warning(
                     f'`{item}` not speficied for a model. Skipping load'
                 )
-                return False
+            return False
+        if 'multilingual' not in model_config or not model_config['multilingual']:
+            for item in ['src', 'tgt']:
+                if item not in model_config:
+                    self._log_warning(
+                        f'`{item}` not speficied for a model. Skipping load'
+                    )
+                    return False
         return True
 
     def _is_valid_model_type(self, model_type: str) -> bool:
@@ -161,16 +173,24 @@ class Config(metaclass=Singleton):
             except ModelLoadingException:
                 continue
 
+        self._log_info(f'{len(self.loaded_models)} models ' + str(list(self.loaded_models.keys())))
+
     def _load_model(self, model_config: Dict) -> None:
-        src: str = model_config['src']
-        tgt: str = model_config['tgt']
+        model_type: str = model_config.get('model_type')
+        src: Optional[str] = model_config['src'] if 'src' in model_config else MULTIMODALCODE
+        tgt: Optional[str] = model_config['tgt'] if 'src' in model_config else MULTIMODALCODE
         alt_id: Optional[str] = model_config.get('alt')
+        multilingual: Optional[bool] = model_config['multilingual'] if 'multilingual' in model_config else False
+        supported_pairs: List[str] = model_config['supported_pairs'] if 'supported_pairs' in model_config else []
         pipeline_msg: List[str] = []
-        model_id: str = get_model_id(src, tgt, alt_id)
+        model_id: str = get_model_id(src=src, tgt=tgt, alt_id=alt_id)
         model_dir: Optional[str] = self._get_model_path(model_config, model_id)
         pretranslatechain: List[str] = self._get_pretranslators(model_config, model_id)
         posttranslatechain: List[str] = self._get_posttranslators(model_config, model_id)
         model: Dict = {
+            'model_type': model_type,
+            'multilingual': multilingual,
+            'supported_pairs': supported_pairs,
             'src': src,
             'tgt': tgt,
             'sentence_segmenter': None,
@@ -211,24 +231,61 @@ class Config(metaclass=Singleton):
     def _load_language_codes(self) -> None:
         if 'languages' in self.config_data:
             self.language_codes = self.config_data['languages']
-            logger.debug(f'Languages: {self.language_codes}')
+            #self.language_codes[MULTIMODALCODE] = "Multilingual"
+            self._log_info(f'Language names: {self.language_codes}')
         else:
             self._log_warning(
                 "Language name spefication dictionary ('languages') not found in configuration."
             )
 
     def _load_languages_list(self) -> None:
-        for model_id in self.loaded_models.keys():
-            if not (parsed_id := parse_model_id(model_id)):
-                self._log_warning(f'Unable to parse model_id of {model_id}')
+        for main_model_id in self.loaded_models.keys():
+            main_parsed_id = parse_model_id(main_model_id)
+            if not (main_parsed_id := parse_model_id(main_model_id)):
+                self._log_warning(f'Unable to parse model_id of {main_model_id}')
                 continue
-            source, target, alt = parsed_id
-            if not source in self.languages_list:
-                self.languages_list[source] = {}
-            if not target in self.languages_list[source]:
-                self.languages_list[source][target] = []
 
-            self.languages_list[source][target].append(model_id)
+            source_main, target_main, alt_main = main_parsed_id
+
+            models_to_add = [] #(model_id, source, target, alt)
+
+            if self.loaded_models[main_model_id]['multilingual']:
+                for model_id in self.loaded_models[main_model_id]['supported_pairs']:
+                    parsed_id = parse_model_id(model_id)
+                    if not (parsed_id := parse_model_id(model_id)):
+                        self._log_warning(f'Unable to parse multilingual model pair {model_id} of {main_model_id}')
+                        continue
+                    source, target, alt = parsed_id
+
+                    if alt_main:
+                        multimodel_code = MULTIMODALCODE + MODEL_TAG_SEPARATOR + model_id + MODEL_TAG_SEPARATOR + alt_main
+                    else:
+                        multimodel_code = MULTIMODALCODE + MODEL_TAG_SEPARATOR + model_id
+
+                    models_to_add.append((multimodel_code, source, target, alt))
+            else:
+                models_to_add.append((main_model_id, source_main, target_main, alt_main))
+
+            for model_info in models_to_add:
+                model_id, source, target, alt = model_info
+                if not source in self.languages_list:
+                    self.languages_list[source] = {}
+                if not target in self.languages_list[source]:
+                    self.languages_list[source][target] = []
+
+                self.languages_list[source][target].append(model_id)
+
+        self._log_info(f'Languages list: {self.languages_list}')
+
+    def _lookup_pair_in_languages_list(self, src, tgt, alt=None):
+        if src in self.languages_list:
+            if tgt in self.languages_list[src]:
+                if self.languages_list[src][tgt]:
+                    if alt:
+                        return [mid for mid in self.languages_list[src][tgt] if mid.endswith(alt)]
+                    else:
+                        return self.languages_list[src][tgt]
+        return []
 
     def _log_warning(self, msg: str) -> None:
         logger.warning(msg)
@@ -276,12 +333,12 @@ class Config(metaclass=Singleton):
         if not src in self.language_codes:
             self._log_warning(
                 f'Source language code `{src}` not defined in '
-                'languages dict. This will surely break something.'
+                'languages dict. This might break something.'
             )
         if not tgt in self.language_codes:
             self._log_warning(
                 f'Target language code `{tgt}` not defined in '
-                'languages dict. This will surely break something.'
+                'languages dict. This might break something.'
             )
 
     def _validate_model_conflicts(
