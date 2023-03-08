@@ -4,7 +4,10 @@ API for serving machine translation models.
 
 It can run two types of models:
 - [ctranslate2](https://github.com/OpenNMT/CTranslate2) models
-- _Helsinki-NLP_ models provided through [huggingface](https://huggingface.co/Helsinki-NLP).
+- Certain transformer-based models models provided through [huggingface](https://huggingface.co/Helsinki-NLP).
+    - OPUS 
+    - OPUS-big
+    - NLLB (Multilingual)
 
 Model specifications need to go in `config.json`.
 
@@ -39,9 +42,9 @@ Add the following configuration under `models` in `config.json`:
 }
 ```
 
-### Helsinki-NLP models (huggingface)
+### OPUS models (huggingface)
 
-You can serve Helsinki-NLP models provided in huggingface, as long as they are one-to-one. Make sure they are listed in https://huggingface.co/Helsinki-NLP and place the language codes exactly as they are. 
+You can serve Helsinki-NLP's OPUS models provided in huggingface, as long as they are one-to-one. Make sure they are listed in https://huggingface.co/Helsinki-NLP and place the language codes exactly as they are. 
 For an French to English model, add the following configuration under `models` in `config.json`:
 
 ```
@@ -59,13 +62,57 @@ For an French to English model, add the following configuration under `models` i
 }
 ```
 
+Some models have a different architecture like the [English to Turkish model](https://huggingface.co/Helsinki-NLP/opus-mt-tc-big-en-tr). These models needs to have `opus-big` as `model_type`. For example:
+
+```
+{
+    "src": "en",
+    "tgt": "tr",
+    "model_type": "opus-big",
+    "load": true,
+    "sentence_split": "nltk", 
+    "pipeline": {
+        "translate": true
+    }
+}
+```
+
+### NLLB model
+
+[NLLB (No Language Left Behind)](https://github.com/facebookresearch/fairseq/tree/nllb) is a multilingal MT model developed by Meta AI that supports [200 languages](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). Model checkpoints of various sizes are [supported through huggingface](https://huggingface.co/docs/transformers/model_doc/nllb) and can be loaded in the API by specifying the checkpoint id and language pairs to be activated in the API configuration. 
+
+Example configuration supporting bidirectional English-Kanuri, English-French, English-Fulfulde, English-Hausa:
+
+```
+{
+  "model_type": "nllb",
+  "nllb_checkpoint_id": "nllb-200-distilled-600M", 
+  "multilingual": true,
+  "load": true,
+  "sentence_split": "nltk",
+  "supported_pairs": ["en-kr", "en-fr", "en-ff", "en-ha"],
+  "pipeline": {
+      "translate": true
+  }
+}
+```
+
+Depending on your server architecture, you can choose `nllb_checkpoint_id` from `nllb-200-distilled-1.3B`, `nllb-200-distilled-600M` or `nllb-200-3.3B`.
+
+By convention, we use languages in two lettered ISO codes in the configuration file. `app/constants.py` contains the mappings from these codes into the codes used by the NLLB model. This mapping is currently incomplete, so, if you need to add a new language and want to use a language ID other than the one used by NLLB model, you add the mapping into this dictionary. If you prefer, you can use the NLLB id directly in the configuration file as well. The complete list of 200 languages and their respective codes can be viewed through [Flores200 README file](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). 
+
+```
+NLLB_LANGS_DICT = {'en': 'eng_Latn', 'tr': 'tur_Latn', 'fr': 'fra_Latn',
+                   'kr': 'knc_Latn', 'ha': 'hau_Latn', 'ff': 'fuv_Latn'}
+```
+
 ## Build and run
 
 Set the environment variables:
 ```
 MT_API_CONFIG=config.json
-MODELS_ROOT=models
-MT_API_DEVICE=gpu|cpu
+MODELS_ROOT=../translation-models
+MT_API_DEVICE=cpu #or "gpu"
 ```
 
 ```
@@ -73,21 +120,21 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
 
-## Build and run with docker-compose
+You can also run `run_local.sh` directly. 
+
+## Build and run with docker-compose (recommended)
 
 ```
 docker-compose build
 docker-compose up
 ```
 
-### To use GPU
+### To use GPU on docker
 
 Do the following edits on docker-compose file
-1. Remove comment `runtime: nvidia` line
+1. Remove comment on `runtime: nvidia` line
 2. Under environment, set `MT_API_DEVICE=gpu`
-3. Rename `Dockerfile` to `Dockerfile-cpu`
-4. Rename `Dockerfile-gpu` to `Dockerfile`
-5. Build and run.
+3. Build and run.
 
 ## Example calls
 
