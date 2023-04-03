@@ -2,15 +2,7 @@
   "languages": {
     "en": "English",
     "fr": "French",
-    "de": "German",
-    "ha": "Hausa",
-    "apc":"Levantine Arabic",
-    "sw_cd":"Congolese Swahili",
-    "ti":"Tigrinya",
-    "uk":"Ukranian",
-    "kr": "Kanuri",
-    "ff": "Fulfulde",
-    "tr": "Turkish"
+    "rw": "Kinyarwanda"
   },
   "models": [
     {
@@ -19,7 +11,7 @@
       "multilingual": true,
       "load": true,
       "sentence_split": "nltk",
-      "supported_pairs": ["en-kr", "en-fr", "en-ff", "en-ha"],
+      "supported_pairs": ["en-rw", "en-fr", "fr-rw", "fr-en","rw-en","rw-fr"],
       "pipeline": {
           "translate": true
       }
