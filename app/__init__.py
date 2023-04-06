@@ -1,10 +1,18 @@
 from fastapi import FastAPI
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.helpers.config import Config
 
 
 def create_app() -> FastAPI:
     app = FastAPI()
+
+    app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], #origins when origins is set
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
     from app.views.v1.translate import translate_v1
 
