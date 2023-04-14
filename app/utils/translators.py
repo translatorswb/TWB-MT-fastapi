@@ -13,8 +13,15 @@ from app.settings import (
 def dummy_translator(content: str) -> str:
     return content
 
-def get_custom_translator(translator_id: str) -> Callable:
-    translator_main_module = importlib.import_module('app.customtranslators.' + translator_id + '.src.interface')
+def get_custom_translator(model_tag: str) -> Callable:
+    translator_info = model_tag.split('/')
+    translator_id = translator_info[0]
+    if len(translator_info) == 1:
+        interface_id = 'interface'
+    else:
+        interface_id = translator_info[1]
+
+    translator_main_module = importlib.import_module('app.customtranslators.' + translator_id + '.src.' + interface_id)
 
     # translator = lambda x: [translator_main_module.translate(i) for i in x] # list IN -> list OUT
 
