@@ -29,6 +29,8 @@ from app.utils.utils import (
     lowercaser,
 )
 
+from app.settings import DEFAULT_NLLB_MODEL_TYPE
+from app.constants import NLLB_CHECKPOINT_IDS
 
 def load_model_sentence_segmenter(
     model: Dict,
@@ -208,10 +210,18 @@ def load_model_translator(
                 )
                 raise ModelLoadingException
         elif model_config['model_type'] == 'nllb':
-            opus_translator = get_batch_nllbtranslator()
+            nllb_checkpoint_id = model_config.get('nllb_checkpoint_id') if 'nllb_checkpoint_id' in model_config else DEFAULT_NLLB_MODEL_TYPE
+
+            if nllb_checkpoint_id not in NLLB_CHECKPOINT_IDS:
+                warn(
+                    f'No checkpoint exists for NLLB model: {nllb_checkpoint_id}. Skipping load.'
+                )
+                raise ModelLoadingException
+
+            opus_translator = get_batch_nllbtranslator(nllb_checkpoint_id)
             if opus_translator:
                 model['translator'] = opus_translator
-                msg += '-nllb-huggingface'
+                msg += '-nllb-huggingface-' + nllb_checkpoint_id
             else:
                 warn(
                     f'Failed to load nllb-huggingface model for {model_id}. Skipping load.'

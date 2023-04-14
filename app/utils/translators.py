@@ -2,7 +2,7 @@ import os
 import importlib
 from typing import Optional, Callable
 
-from app.constants import HELSINKI_NLP, NLLB_LANGS_DICT, NLLB_MODEL_TYPE
+from app.constants import HELSINKI_NLP, NLLB_LANGS_DICT
 from app.settings import (
     CTRANSLATE_DEVICE,
     CTRANSLATE_INTER_THREADS,
@@ -132,19 +132,18 @@ def get_batch_opusbigtranslator(
     return None
 
 
-def get_batch_nllbtranslator() -> Optional[Callable[[str], str]]:
+def get_batch_nllbtranslator(nllb_checkpoint_id:str) -> Optional[Callable[[str], str]]:
 
     from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
-    model_name = NLLB_MODEL_TYPE
-    local_model = os.path.join(MODELS_ROOT_DIR, model_name)
-    remote_model = "facebook/" + NLLB_MODEL_TYPE
+    local_model = os.path.join(MODELS_ROOT_DIR, nllb_checkpoint_id)
+    remote_model = "facebook/" + nllb_checkpoint_id
 
     is_model_loaded, is_tokenizer_loaded = False, False
 
     def translator(src_texts, src, tgt):
-        nllb_src = NLLB_LANGS_DICT.get(src)
-        nllb_tgt = NLLB_LANGS_DICT.get(tgt)
+        nllb_src = NLLB_LANGS_DICT.get(src) if src in NLLB_LANGS_DICT else src
+        nllb_tgt = NLLB_LANGS_DICT.get(tgt) if tgt in NLLB_LANGS_DICT else tgt
 
         if not src_texts:
             return ''
