@@ -3,7 +3,7 @@ import logging
 
 from app.helpers.config import Config
 
-DEVDEBUG = False
+DEVDEBUG = True
 logger = logging.getLogger('console_logger')
 
 # TODO: This should get text batch
@@ -25,8 +25,8 @@ def translate_text(model_id: str, text: str, src: str, tgt: str) -> Optional[str
     # Pre-translate
     if model['pretranslatechain']:
         for pair in model['pretranslatechain']:
-            sentence_batch = config.loaded_models[pair]['translator'](sentence_batch)
-        if DEVDEBUG: logger.debug(f'translate_text:Pre-translate/sentence_batch {sentence_batch}')
+            sentence_batch = config.loaded_models[pair]['translator'](sentence_batch, src, tgt)
+        if DEVDEBUG: logger.debug(f'translate_text:Pre-translate/ {src} - {tgt} {sentence_batch}')
     
     # Preprocess
     for proc in model['preprocessors']:
@@ -52,8 +52,8 @@ def translate_text(model_id: str, text: str, src: str, tgt: str) -> Optional[str
     # Post-translate
     if model['posttranslatechain']:
         for pair in model['posttranslatechain']:
-            tgt_sentences = config.loaded_models[pair]['translator'](tgt_sentences)
-        if DEVDEBUG: logger.debug(f'translate_text:Post-translate/tgt_sentences {tgt_sentences}')
+            tgt_sentences = config.loaded_models[pair]['translator'](tgt_sentences, src, tgt)
+        if DEVDEBUG: logger.debug(f'translate_text:Post-translate {src} - {tgt} {tgt_sentences}')
     tgt_text = ' '.join(tgt_sentences)
 
     return tgt_text
