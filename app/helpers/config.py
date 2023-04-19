@@ -95,6 +95,7 @@ class Config(metaclass=Singleton):
                         m_id = get_model_id(src=m['src'], tgt=m['tgt'])
                         if m_id == pair and m['load']:
                             pair_found = True
+                            pretranslator_chain.append(pair)
                             break
                 if not pair_found: 
                     self._log_warning(
@@ -195,9 +196,11 @@ class Config(metaclass=Singleton):
         model_dir: Optional[str] = self._get_model_path(model_config, model_id)
         pretranslatechain: List[str] = self._get_pretranslators(model_config, model_id)
         if model_config.get('pretranslatechain') and not pretranslatechain:
+            print("jump!")
             return
         posttranslatechain: List[str] = self._get_posttranslators(model_config, model_id)
         if model_config.get('posttranslatechain') and not posttranslatechain:
+            print("jump 2!")
             return
         model: Dict = {
             'model_type': model_type,
