@@ -54,9 +54,12 @@ def fetch_model_data_from_request(request):
     if use_multi:
         if multilingual_model_exists_for_pair:
             #fetch multimodal 
+            print("fetch multimodal ")
             model_id = get_model_id(src=MULTIMODALCODE,
                                     tgt=MULTIMODALCODE,
                                     alt_id=request.alt)
+
+            #TODO: Fails with alt models
         else:
             raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

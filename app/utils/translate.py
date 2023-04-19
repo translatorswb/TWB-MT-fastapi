@@ -2,7 +2,8 @@ from typing import Optional
 import logging
 
 from app.helpers.config import Config
-from app.utils.utils import parse_model_id
+from app.utils.utils import parse_model_id, get_model_id
+from app.constants import MULTIMODALCODE
 
 DEVDEBUG = True
 logger = logging.getLogger('console_logger')
@@ -28,7 +29,7 @@ def translate_text(model_id: str, text: str, src: str, tgt: str) -> Optional[str
         for pair in model['pretranslatechain']:
             chainmodel_src, chainmodel_tgt, chainmodel_alt = parse_model_id(pair)
             if not pair in config.loaded_models:
-                pair = "MULTI-MULTI"
+                pair = get_model_id(MULTIMODALCODE, MULTIMODALCODE) #TODO: Not tested with alt
             sentence_batch = config.loaded_models[pair]['translator'](sentence_batch, chainmodel_src, chainmodel_tgt)
             if DEVDEBUG: logger.debug(f'>translate_text:Pre-translate {pair}, {chainmodel_src}-{chainmodel_tgt} {sentence_batch}')
     
@@ -58,7 +59,7 @@ def translate_text(model_id: str, text: str, src: str, tgt: str) -> Optional[str
         for pair in model['posttranslatechain']:
             chainmodel_src, chainmodel_tgt, chainmodel_alt = parse_model_id(pair)
             if not pair in config.loaded_models:
-                pair = "MULTI-MULTI"
+                pair = get_model_id(MULTIMODALCODE, MULTIMODALCODE) #TODO: Not tested with alt
             tgt_sentences = config.loaded_models[pair]['translator'](tgt_sentences, chainmodel_src, chainmodel_tgt)
             if DEVDEBUG: logger.debug(f'>translate_text:Post-translate {pair}, {chainmodel_src}-{chainmodel_tgt} {tgt_sentences}')
     tgt_text = ' '.join(tgt_sentences)
