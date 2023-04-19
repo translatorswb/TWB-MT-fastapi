@@ -1,7 +1,7 @@
 MOSES_TOKENIZER_DEFAULT_LANG = 'en'
 HELSINKI_NLP = 'Helsinki-NLP'
 MULTIMODALCODE = 'MULTI'
-SUPPORTED_MODEL_TYPES = ['opus', 'opus-big', 'ctranslator2', 'dummy', 'custom', 'nllb']
+SUPPORTED_MODEL_TYPES = ['opus', 'opus-big', 'ctranslator2', 'dummy', 'custom', 'nllb', 'm2m100']
 MODEL_TAG_SEPARATOR = '-'
 
 #This dictionary is needed to map language codes specified in config to the codes used in NLLB models. 
@@ -12,3 +12,5 @@ NLLB_LANGS_DICT = {'en': 'eng_Latn', 'tr': 'tur_Latn', 'fr': 'fra_Latn',
 				   'rw': 'kin_Latn'}
 
 NLLB_CHECKPOINT_IDS = ["nllb-200-distilled-1.3B", "nllb-200-distilled-600M", "nllb-200-3.3B"]
+
+M2M100_CHECKPOINT_IDS = ["m2m100_418M", "m2m100_1.2B"]

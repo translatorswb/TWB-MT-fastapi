@@ -191,3 +191,54 @@ def get_batch_nllbtranslator(nllb_checkpoint_id:str) -> Optional[Callable[[str],
         print("Loaded NLLB model", remote_model)
         return translator
     return None
+
+def get_batch_m2m100translator(m2m100_checkpoint_id:str) -> Optional[Callable[[str], str]]:
+
+    from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration, pipeline
+
+    local_model = os.path.join(MODELS_ROOT_DIR, m2m100_checkpoint_id)
+    remote_model = "facebook/" + m2m100_checkpoint_id
+
+    is_model_loaded, is_tokenizer_loaded = False, False
+
+    def translator(src_texts, src, tgt):
+
+        if not src_texts:
+            return ''
+        else:
+            #pipeline was here
+            m2m100_translator = pipeline(
+                "translation",
+                model=model,
+                tokenizer=tokenizer,
+                src_lang=src,
+                tgt_lang=tgt,
+                device=TRANSFORMERS_DEVICE
+            )
+
+            return [m2m100_translator(text, max_length=400)[0]["translation_text"] 
+                    for text in src_texts]
+
+    try:
+        tokenizer = M2M100Tokenizer.from_pretrained(local_model)
+    except Exception as e:
+        print(e)
+        tokenizer = M2M100Tokenizer.from_pretrained(remote_model)
+        tokenizer.save_pretrained(local_model)
+    finally:
+        is_tokenizer_loaded = True
+
+    try:
+        model = M2M100ForConditionalGeneration.from_pretrained(local_model)
+    except Exception as e: 
+        print(e)
+        model = M2M100ForConditionalGeneration.from_pretrained(remote_model)
+        model.save_pretrained(local_model)
+    finally:
+        is_model_loaded = True
+
+
+    if is_tokenizer_loaded and is_model_loaded:
+        print("Loaded M2M100 model", remote_model)
+        return translator
+    return None
