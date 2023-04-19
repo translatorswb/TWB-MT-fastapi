@@ -2,13 +2,15 @@
 
 API for serving machine translation models. 
 
-It can run two types of models:
+It can run three types of translation systems:
 - [ctranslate2](https://github.com/OpenNMT/CTranslate2) models
 - Certain transformer-based models models provided through [huggingface](https://huggingface.co/Helsinki-NLP).
     - OPUS 
     - OPUS-big
     - NLLB (Multilingual)
-
+    - M2M100 (Multilingual)
+- Custom translators specified as a python module (Experimental)
+   
 Model specifications need to go in `config.json`.
 
 ## Model installation examples
@@ -42,7 +44,7 @@ Add the following configuration under `models` in `config.json`:
 }
 ```
 
-### OPUS models (huggingface)
+### OPUS models
 
 You can serve Helsinki-NLP's OPUS models provided in huggingface, as long as they are one-to-one. Make sure they are listed in https://huggingface.co/Helsinki-NLP and place the language codes exactly as they are. 
 For an French to English model, add the following configuration under `models` in `config.json`:
@@ -86,7 +88,7 @@ Example configuration supporting bidirectional English-Kanuri, English-French, E
 ```
 {
   "model_type": "nllb",
-  "nllb_checkpoint_id": "nllb-200-distilled-600M", 
+  "checkpoint_id": "nllb-200-distilled-600M", 
   "multilingual": true,
   "load": true,
   "sentence_split": "nltk",
@@ -97,7 +99,7 @@ Example configuration supporting bidirectional English-Kanuri, English-French, E
 }
 ```
 
-Depending on your server architecture, you can choose `nllb_checkpoint_id` from `nllb-200-distilled-1.3B`, `nllb-200-distilled-600M` or `nllb-200-3.3B`.
+Depending on your server architecture, you can choose `checkpoint_id` from `nllb-200-distilled-1.3B`, `nllb-200-distilled-600M` or `nllb-200-3.3B`.
 
 By convention, we use languages in two lettered ISO codes in the configuration file. `app/constants.py` contains the mappings from these codes into the codes used by the NLLB model. This mapping is currently incomplete, so, if you need to add a new language and want to use a language ID other than the one used by NLLB model, you add the mapping into this dictionary. If you prefer, you can use the NLLB id directly in the configuration file as well. The complete list of 200 languages and their respective codes can be viewed through [Flores200 README file](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). 
 
@@ -105,6 +107,30 @@ By convention, we use languages in two lettered ISO codes in the configuration f
 NLLB_LANGS_DICT = {'en': 'eng_Latn', 'tr': 'tur_Latn', 'fr': 'fra_Latn',
                    'kr': 'knc_Latn', 'ha': 'hau_Latn', 'ff': 'fuv_Latn'}
 ```
+
+### M2M100 model
+
+[M2M100](https://huggingface.co/docs/transformers/model_doc/m2m_100) is a multilingal MT model developed by Meta AI that supports 100 languages. Model checkpoints of various sizes ([418M](https://huggingface.co/facebook/m2m100_418M), [1.2B](https://huggingface.co/facebook/m2m100_1.2B)) are supported through huggingface and can be loaded in the API by specifying the checkpoint id and language pairs to be activated in the API configuration. 
+
+Example configuration supporting bidirectional English-Turkish and English-Spanish:
+
+```
+{
+  "model_type": "m2m100",
+  "checkpoint_id": "m2m100_418M", 
+  "multilingual": true,
+  "load": true,
+  "sentence_split": "nltk",
+  "supported_pairs": ["en-tr", "en-es"],
+  "pipeline": {
+      "translate": true
+  }
+}
+```
+
+Depending on your server architecture, you can choose `checkpoint_id` from `m2m100_418M` and `m2m100_1.2B`.
+
+### WARNING: Only one multilingual model can be loaded right now. 
 
 ## Build and run
 
