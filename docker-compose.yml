@@ -12,6 +12,7 @@ services:
     volumes:
       - .:/app
       - ../translation-models:/app/models
+      - ./config.json:/app/config.json
     environment:
       - MT_API_CONFIG=/app/config.json
       - MT_API_DEVICE=gpu #or gpu, if so make runtime:nvidia
