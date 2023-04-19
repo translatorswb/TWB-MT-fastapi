@@ -2,6 +2,7 @@ from typing import Optional
 import logging
 
 from app.helpers.config import Config
+from app.utils.utils import parse_model_id
 
 DEVDEBUG = True
 logger = logging.getLogger('console_logger')
@@ -25,8 +26,11 @@ def translate_text(model_id: str, text: str, src: str, tgt: str) -> Optional[str
     # Pre-translate
     if model['pretranslatechain']:
         for pair in model['pretranslatechain']:
-            sentence_batch = config.loaded_models[pair]['translator'](sentence_batch, src, tgt)
-            if DEVDEBUG: logger.debug(f'>translate_text:Pre-translate/ {pair} {sentence_batch}')
+            chainmodel_src, chainmodel_tgt, chainmodel_alt = parse_model_id(pair)
+            if not pair in config.loaded_models:
+                pair = "MULTI-MULTI"
+            sentence_batch = config.loaded_models[pair]['translator'](sentence_batch, chainmodel_src, chainmodel_tgt)
+            if DEVDEBUG: logger.debug(f'>translate_text:Pre-translate {pair}, {chainmodel_src}-{chainmodel_tgt} {sentence_batch}')
     
     # Preprocess
     for proc in model['preprocessors']:
@@ -52,8 +56,11 @@ def translate_text(model_id: str, text: str, src: str, tgt: str) -> Optional[str
     # Post-translate
     if model['posttranslatechain']:
         for pair in model['posttranslatechain']:
-            tgt_sentences = config.loaded_models[pair]['translator'](tgt_sentences, src, tgt)
-            if DEVDEBUG: logger.debug(f'>translate_text:Post-translate {pair} {tgt_sentences}')
+            chainmodel_src, chainmodel_tgt, chainmodel_alt = parse_model_id(pair)
+            if not pair in config.loaded_models:
+                pair = "MULTI-MULTI"
+            tgt_sentences = config.loaded_models[pair]['translator'](tgt_sentences, chainmodel_src, chainmodel_tgt)
+            if DEVDEBUG: logger.debug(f'>translate_text:Post-translate {pair}, {chainmodel_src}-{chainmodel_tgt} {tgt_sentences}')
     tgt_text = ' '.join(tgt_sentences)
 
     return tgt_text

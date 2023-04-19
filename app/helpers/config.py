@@ -89,7 +89,7 @@ class Config(metaclass=Singleton):
                     if 'multilingual' in m and m['multilingual']:
                         if pair in m['supported_pairs'] and m['load']:
                             pair_found = True
-                            pretranslator_chain.append('MULTI-MULTI')
+                            pretranslator_chain.append(pair)
                             break
                     else:
                         m_id = get_model_id(src=m['src'], tgt=m['tgt'])
@@ -122,7 +122,7 @@ class Config(metaclass=Singleton):
                     if 'multilingual' in m and m['multilingual']:
                         if pair in m['supported_pairs'] and m['load']:
                             pair_found = True
-                            posttranslator_chain.append('MULTI-MULTI')
+                            posttranslator_chain.append(pair)
                             break
                     else:
                         m_id = get_model_id(src=m['src'], tgt=m['tgt'])
@@ -196,11 +196,9 @@ class Config(metaclass=Singleton):
         model_dir: Optional[str] = self._get_model_path(model_config, model_id)
         pretranslatechain: List[str] = self._get_pretranslators(model_config, model_id)
         if model_config.get('pretranslatechain') and not pretranslatechain:
-            print("jump!")
             return
         posttranslatechain: List[str] = self._get_posttranslators(model_config, model_id)
         if model_config.get('posttranslatechain') and not posttranslatechain:
-            print("jump 2!")
             return
         model: Dict = {
             'model_type': model_type,
