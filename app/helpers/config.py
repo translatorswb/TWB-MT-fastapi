@@ -57,7 +57,7 @@ class Config(metaclass=Singleton):
         model_dir = None
 
         # Check model path
-        if 'model_path' in model_config and model_config['model_path']:
+        if 'model_path' in model_config and model_config['model_path'] and not model_config['model_type'] == 'custom':
             model_dir = os.path.join(
                 MODELS_ROOT_DIR, model_config['model_path']
             )
@@ -84,14 +84,19 @@ class Config(metaclass=Singleton):
             #check if all pairs are in config
             for pair in model_config['pretranslatechain']:
                 pair_found = False
+                multilingual = False
                 for m in self.config_data['models']:
-                    #TODO
                     if 'multilingual' in m and m['multilingual']:
-                        continue
-                    m_id = get_model_id(src=m['src'], tgt=m['tgt'])
-                    if m_id == pair and m['load']:
-                        pair_found = True
-                        break
+                        if pair in m['supported_pairs'] and m['load']:
+                            pair_found = True
+                            pretranslator_chain.append(pair)
+                            break
+                    else:
+                        m_id = get_model_id(src=m['src'], tgt=m['tgt'])
+                        if m_id == pair and m['load']:
+                            pair_found = True
+                            pretranslator_chain.append(pair)
+                            break
                 if not pair_found: 
                     self._log_warning(
                         f'Pretranslation model {pair} not found or is not active. '
@@ -99,7 +104,7 @@ class Config(metaclass=Singleton):
                     )
                     return pretranslator_chain
 
-            pretranslator_chain = model_config['pretranslatechain']
+            # pretranslator_chain = model_config['pretranslatechain']
 
         return pretranslator_chain
 
@@ -114,13 +119,17 @@ class Config(metaclass=Singleton):
             for pair in model_config['posttranslatechain']:
                 pair_found = False
                 for m in self.config_data['models']:
-                    #TODO
                     if 'multilingual' in m and m['multilingual']:
-                        continue
-                    m_id = get_model_id(src=m['src'], tgt=m['tgt'])
-                    if m_id == pair and m['load']:
-                        pair_found = True
-                        break
+                        if pair in m['supported_pairs'] and m['load']:
+                            pair_found = True
+                            posttranslator_chain.append(pair)
+                            break
+                    else:
+                        m_id = get_model_id(src=m['src'], tgt=m['tgt'])
+                        if m_id == pair and m['load']:
+                            pair_found = True
+                            posttranslator_chain.append(pair)
+                            break
                 if not pair_found: 
                     self._log_warning(
                         f'Posttranslation model {pair} not found or is not active. '
@@ -128,7 +137,7 @@ class Config(metaclass=Singleton):
                     )
                     return posttranslator_chain
 
-            posttranslator_chain = model_config['posttranslatechain']
+            # posttranslator_chain = model_config['posttranslatechain']
 
         return posttranslator_chain
 
@@ -186,7 +195,11 @@ class Config(metaclass=Singleton):
         model_id: str = get_model_id(src=src, tgt=tgt, alt_id=alt_id)
         model_dir: Optional[str] = self._get_model_path(model_config, model_id)
         pretranslatechain: List[str] = self._get_pretranslators(model_config, model_id)
+        if model_config.get('pretranslatechain') and not pretranslatechain:
+            return
         posttranslatechain: List[str] = self._get_posttranslators(model_config, model_id)
+        if model_config.get('posttranslatechain') and not posttranslatechain:
+            return
         model: Dict = {
             'model_type': model_type,
             'multilingual': multilingual,

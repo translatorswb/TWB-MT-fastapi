@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
+import logging
 
 from app.helpers.config import Config
 from app.utils.utils import get_model_id
@@ -15,6 +16,7 @@ from app.constants import NLLB_LANGS_DICT, MULTIMODALCODE
 translate_v1 = APIRouter(prefix='/api/v1/translate')
 
 DEVDEBUG = True
+logger = logging.getLogger('console_logger')
 
 def fetch_model_data_from_request(request):
     config = Config()
@@ -39,9 +41,9 @@ def fetch_model_data_from_request(request):
             )
 
     if DEVDEBUG: 
-        print('compatible_model_ids', compatible_model_ids)
+        logger.debug(f'compatible_model_ids {compatible_model_ids}')
         if use_multi:
-            print('use_multi', use_multi)
+            logger.debug(f'use_multi {use_multi}')
     
     regular_model_exists = model_id in config.loaded_models
     multilingual_model_exists_for_pair = any([mid.startswith(MULTIMODALCODE) for mid in compatible_model_ids])
@@ -52,16 +54,19 @@ def fetch_model_data_from_request(request):
     if use_multi:
         if multilingual_model_exists_for_pair:
             #fetch multimodal 
+            print("fetch multimodal ")
             model_id = get_model_id(src=MULTIMODALCODE,
                                     tgt=MULTIMODALCODE,
                                     alt_id=request.alt)
+
+            #TODO: Fails with alt models
         else:
             raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'No multilingual model support for pair {src}-{tgt}. Remove flag `use_multi` from request',
         )
 
-    if DEVDEBUG: print('model_id', model_id)
+    if DEVDEBUG: logger.debug(f'model_id {model_id}')
 
     return model_id, src, tgt
 
