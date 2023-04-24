@@ -213,11 +213,14 @@ def load_model_translator(
         elif model_config['model_type'] == 'nllb':
             nllb_checkpoint_id = model_config.get('checkpoint_id') if 'checkpoint_id' in model_config else DEFAULT_NLLB_MODEL_TYPE
 
-            if nllb_checkpoint_id not in NLLB_CHECKPOINT_IDS:
-                warn(
-                    f'No checkpoint exists for NLLB model: {nllb_checkpoint_id}. Skipping load.'
-                )
-                raise ModelLoadingException
+            if len(model_config.get('checkpoint_id').split('/')) == 1:
+                if nllb_checkpoint_id not in NLLB_CHECKPOINT_IDS:
+                    warn(
+                        f'No checkpoint exists for base NLLB model: facebook/{nllb_checkpoint_id}. Skipping load.'
+                    )
+                    raise ModelLoadingException
+                nllb_checkpoint_id = 'facebook/' + nllb_checkpoint_id
+                warn(f'Full model id: {nllb_checkpoint_id}')
 
             translator = get_batch_nllbtranslator(nllb_checkpoint_id)
             if translator:
@@ -231,11 +234,14 @@ def load_model_translator(
         elif model_config['model_type'] == 'm2m100':
             m2m100_checkpoint_id = model_config.get('checkpoint_id') if 'checkpoint_id' in model_config else DEFAULT_M2M100_MODEL_TYPE
 
-            if m2m100_checkpoint_id not in M2M100_CHECKPOINT_IDS:
-                warn(
-                    f'No checkpoint exists for NLLB model: {m2m100_checkpoint_id}. Skipping load.'
-                )
-                raise ModelLoadingException
+            if len(model_config.get('checkpoint_id').split('/')) == 1:
+                if m2m100_checkpoint_id not in M2M100_CHECKPOINT_IDS:
+                    warn(
+                        f'No checkpoint exists for base M2M100 model: facebook/{m2m100_checkpoint_id}. Skipping load.'
+                    )
+                    raise ModelLoadingException
+                m2m100_checkpoint_id = 'facebook/' + m2m100_checkpoint_id
+                warn(f'Full model id: {m2m100_checkpoint_id}')
 
             translator = get_batch_m2m100translator(m2m100_checkpoint_id)
             if translator:

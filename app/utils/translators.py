@@ -144,7 +144,7 @@ def get_batch_nllbtranslator(nllb_checkpoint_id:str) -> Optional[Callable[[str],
     from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
     local_model = os.path.join(MODELS_ROOT_DIR, nllb_checkpoint_id)
-    remote_model = "facebook/" + nllb_checkpoint_id
+    remote_model = nllb_checkpoint_id
 
     is_model_loaded, is_tokenizer_loaded = False, False
 
@@ -197,7 +197,7 @@ def get_batch_m2m100translator(m2m100_checkpoint_id:str) -> Optional[Callable[[s
     from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration, pipeline
 
     local_model = os.path.join(MODELS_ROOT_DIR, m2m100_checkpoint_id)
-    remote_model = "facebook/" + m2m100_checkpoint_id
+    remote_model = m2m100_checkpoint_id
 
     is_model_loaded, is_tokenizer_loaded = False, False
 
