@@ -7,11 +7,48 @@
   "models": [
     {
       "model_type": "nllb",
-      "nllb_checkpoint_id": "nllb-200-distilled-600M",
+      "checkpoint_id": "nllb-200-distilled-600M",
+      "multilingual": true,
+      "load": false,
+      "sentence_split": "nltk",
+      "supported_pairs": ["en-rw", "en-fr", "fr-rw", "fr-en","rw-en","rw-fr"],
+      "pipeline": {
+          "translate": true
+      },
+      "lang_code_map": {"en": "eng_Latn", "tr": "tur_Latn", "fr": "fra_Latn",
+           "kr": "knc_Latn", "ha": "hau_Latn", "ff": "fuv_Latn","rw": "kin_Latn"}
+    },
+    {
+      "model_type": "m2m100",
+      "checkpoint_id": "m2m100_418M",
       "multilingual": true,
       "load": true,
       "sentence_split": "nltk",
-      "supported_pairs": ["en-rw", "en-fr", "fr-rw", "fr-en","rw-en","rw-fr"],
+      "supported_pairs": ["en-tr"],
+      "pipeline": {
+          "translate": true
+      }
+    },
+    {
+      "model_type": "nllb",
+      "checkpoint_id": "DigitalUmuganda/m2m100_en_kin_from_en_fr",
+      "multilingual": true,
+      "load": true,
+      "alt": "du_en_kin",
+      "sentence_split": "nltk",
+      "supported_pairs": ["en-fr"],
+      "pipeline": {
+          "translate": true
+      }
+    },
+    {
+      "model_type": "nllb",
+      "checkpoint_id": "DigitalUmuganda/...",
+      "multilingual": true,
+      "load": false,
+      "alt": "du_kin_en",
+      "sentence_split": "nltk",
+      "supported_pairs": ["fr-en"],
       "pipeline": {
           "translate": true
       }
