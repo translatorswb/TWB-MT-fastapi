@@ -13,11 +13,37 @@ It can run three types of translation systems:
    
 Model specifications need to go in `config.json`.
 
-## Model installation examples
+## Model configuration
 
-### Custom model (ctranslate2)
+### Configuration file syntax
 
-For an English to Turkish model, place the following files under `model/entr`: 
+API configuration file (`config.json`) is where we specify the models to load and their pipeline. It is a JSON format file containing a dictionary `languages` and a list `models`. Languages is just an (optional) mapping between language codes (e.g. `en`) and language names (e.g. English). `model` lists the model configurations as dictionaries. An minimal example of configuration file:
+
+```
+{
+  "languages": {
+    "en": "English",
+    "fr": "French",
+    "tr": "Turkish"
+  },
+  "models": [
+    {
+        "src": "en",
+        "tgt": "tr",
+        "model_type": "opus-big",
+        "load": true,
+        "sentence_split": "nltk", 
+        "pipeline": {
+            "translate": true
+        }
+    }
+  ]
+}
+```
+
+### Custom ctranslate2 model configuration
+
+To load an English to Turkish model, place the following files under `model/entr`: 
 
 - ctranslator2 model as `model.bin`
 - (Optional) BPE subword codes file (e.g. `bpe.en-tr.codes`)
@@ -44,7 +70,7 @@ Add the following configuration under `models` in `config.json`:
 }
 ```
 
-### OPUS models
+### OPUS model configuration
 
 You can serve Helsinki-NLP's OPUS models provided in huggingface, as long as they are one-to-one. Make sure they are listed in https://huggingface.co/Helsinki-NLP and place the language codes exactly as they are. 
 For an French to English model, add the following configuration under `models` in `config.json`:
@@ -130,7 +156,48 @@ Example configuration supporting bidirectional English-Turkish and English-Spani
 
 Depending on your server architecture, you can choose `checkpoint_id` from `m2m100_418M` and `m2m100_1.2B`.
 
-### WARNING: Only one multilingual model can be loaded right now. 
+### WARNING: An `alt` code must be assigned when loading multiple multilingual models.
+
+## Advanced configuration features
+
+### Alternative model loading
+
+By default one model can be loaded to serve a language direction. Although if you'd like to have multiple models for a language pair or want to have multiple multilingual models, you can use the `alt` parameter in your model configuration. For example, let's load both `opus` and `opus-big` models for `en-fr` from huggingface:
+
+```
+{
+    "src": "en",
+    "tgt": "fr",
+    "model_type": "opus",
+    "load": true,
+    "sentence_split": "nltk", 
+    "pipeline": {
+        "translate": true
+    }
+},
+{
+    "src": "en",
+    "tgt": "fr",
+    "alt": "big",
+    "model_type": "opus-big",
+    "load": true,
+    "sentence_split": "nltk", 
+    "pipeline": {
+        "translate": true
+    }
+}
+```
+
+To use the big model, you'll need to specify an `alt` parameter as `big`. (Example shown later below)
+
+### Model chaining
+
+TODO...
+
+### Custom translator packages
+
+TODO...
+
 
 ## Build and run
 
@@ -182,6 +249,29 @@ curl --location --request POST 'http://127.0.0.1:8001/api/v1/translate' \
 import httpx
 translate_service_url = "http://127.0.0.1:8001/api/v1/translate"
 json_data = {'src':'fr', 'tgt':'en', 'text':"c'est un test."}
+r = httpx.post(translate_service_url, json=json_data)
+response = r.json()
+print("Translation:", response['translation'])
+```
+
+### Using alternative models
+
+You can specify usage of alternative models with the `alt` parameter in your requests.
+
+#### cURL
+
+```
+curl --location --request POST 'http://127.0.0.1:8001/api/v1/translate' \
+--header 'Content-Type: application/json' \
+--data-raw '{"src":"en", "tgt":"fr", "alt":"big", text":"this is a test."}'
+```
+
+#### Python
+
+```
+import httpx
+translate_service_url = "http://127.0.0.1:8001/api/v1/translate"
+json_data = {'src':'en', 'tgt':'fr', 'alt':'big', text':"this is a test."}
 r = httpx.post(translate_service_url, json=json_data)
 response = r.json()
 print("Translation:", response['translation'])

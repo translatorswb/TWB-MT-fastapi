@@ -2,7 +2,7 @@ import os
 import importlib
 from typing import Optional, Callable
 
-from app.constants import HELSINKI_NLP, NLLB_LANGS_DICT
+from app.constants import HELSINKI_NLP
 from app.settings import (
     CTRANSLATE_DEVICE,
     CTRANSLATE_INTER_THREADS,
@@ -139,7 +139,7 @@ def get_batch_opusbigtranslator(
     return None
 
 
-def get_batch_nllbtranslator(nllb_checkpoint_id:str) -> Optional[Callable[[str], str]]:
+def get_batch_nllbtranslator(nllb_checkpoint_id:str, lang_map:dict=None) -> Optional[Callable[[str], str]]:
 
     from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 
@@ -149,8 +149,9 @@ def get_batch_nllbtranslator(nllb_checkpoint_id:str) -> Optional[Callable[[str],
     is_model_loaded, is_tokenizer_loaded = False, False
 
     def translator(src_texts, src, tgt):
-        nllb_src = NLLB_LANGS_DICT.get(src) if src in NLLB_LANGS_DICT else src
-        nllb_tgt = NLLB_LANGS_DICT.get(tgt) if tgt in NLLB_LANGS_DICT else tgt
+        if lang_map:
+            src = lang_map.get(src) if src in lang_map else src
+            tgt = lang_map.get(tgt) if tgt in lang_map else tgt
 
         if not src_texts:
             return ''
@@ -160,8 +161,8 @@ def get_batch_nllbtranslator(nllb_checkpoint_id:str) -> Optional[Callable[[str],
                 "translation",
                 model=model,
                 tokenizer=tokenizer,
-                src_lang=nllb_src,
-                tgt_lang=nllb_tgt,
+                src_lang=src,
+                tgt_lang=tgt,
                 device=TRANSFORMERS_DEVICE
             )
 
@@ -192,7 +193,7 @@ def get_batch_nllbtranslator(nllb_checkpoint_id:str) -> Optional[Callable[[str],
         return translator
     return None
 
-def get_batch_m2m100translator(m2m100_checkpoint_id:str) -> Optional[Callable[[str], str]]:
+def get_batch_m2m100translator(m2m100_checkpoint_id:str, lang_map:dict=None) -> Optional[Callable[[str], str]]:
 
     from transformers import M2M100Tokenizer, M2M100ForConditionalGeneration, pipeline
 
@@ -202,6 +203,9 @@ def get_batch_m2m100translator(m2m100_checkpoint_id:str) -> Optional[Callable[[s
     is_model_loaded, is_tokenizer_loaded = False, False
 
     def translator(src_texts, src, tgt):
+        if lang_map:
+            src = lang_map.get(src) if src in lang_map else src
+            tgt = lang_map.get(tgt) if tgt in lang_map else tgt
 
         if not src_texts:
             return ''

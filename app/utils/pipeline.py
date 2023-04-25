@@ -222,7 +222,7 @@ def load_model_translator(
                 nllb_checkpoint_id = 'facebook/' + nllb_checkpoint_id
                 warn(f'Full model id: {nllb_checkpoint_id}')
 
-            translator = get_batch_nllbtranslator(nllb_checkpoint_id)
+            translator = get_batch_nllbtranslator(nllb_checkpoint_id, lang_map=model_config.get('lang_code_map'))
             if translator:
                 model['translator'] = translator
                 msg += '-nllb-huggingface-' + nllb_checkpoint_id
@@ -243,7 +243,7 @@ def load_model_translator(
                 m2m100_checkpoint_id = 'facebook/' + m2m100_checkpoint_id
                 warn(f'Full model id: {m2m100_checkpoint_id}')
 
-            translator = get_batch_m2m100translator(m2m100_checkpoint_id)
+            translator = get_batch_m2m100translator(m2m100_checkpoint_id, lang_map=model_config.get('lang_code_map'))
             if translator:
                 model['translator'] = translator
                 msg += '-m2m100-huggingface-' + m2m100_checkpoint_id

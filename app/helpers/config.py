@@ -29,6 +29,7 @@ class Config(metaclass=Singleton):
         self.loaded_models: Dict = {}
         self.language_codes: Dict = {}
         self.languages_list: Dict = {}
+        self.pair_to_model_id_map: Dict = {}
         self.config_data: Dict = config_data or {}
         self.config_file: str = config_file or CONFIG_JSON_PATH
         self.load_all_models: bool = load_all_models
@@ -287,6 +288,7 @@ class Config(metaclass=Singleton):
                     self.languages_list[source][target] = []
 
                 self.languages_list[source][target].append(model_id)
+                self.pair_to_model_id_map[model_id] = main_model_id
 
         self._log_info(f'Languages list: {self.languages_list}')
 
@@ -299,6 +301,9 @@ class Config(metaclass=Singleton):
                     else:
                         return self.languages_list[src][tgt]
         return []
+
+    def _pair_to_model_id(self, pair_id:str):
+        return self.pair_to_model_id_map[pair_id]
 
     def _log_warning(self, msg: str) -> None:
         logger.warning(msg)
