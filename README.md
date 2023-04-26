@@ -4,11 +4,10 @@ API for serving machine translation models.
 
 It can run three types of translation systems:
 - [ctranslate2](https://github.com/OpenNMT/CTranslate2) models
-- Certain transformer-based models models provided through [huggingface](https://huggingface.co/Helsinki-NLP).
-    - OPUS 
-    - OPUS-big
-    - NLLB (Multilingual)
-    - M2M100 (Multilingual)
+- Certain transformer-based models models provided through [huggingface](https://huggingface.co/).
+    - OPUS and OPUS-big models of [Helsinki-NLP](https://huggingface.co/Helsinki-NLP)
+    - [NLLB](https://huggingface.co/docs/transformers/v4.28.1/en/model_doc/nllb) (Multilingual)
+    - [M2M100](https://huggingface.co/docs/transformers/model_doc/m2m_100) (Multilingual)
 - Custom translators specified as a python module (Experimental)
    
 Model specifications need to go in `config.json`.
@@ -43,11 +42,11 @@ API configuration file (`config.json`) is where we specify the models to load an
 
 ### Custom ctranslate2 model configuration
 
-To load an English to Turkish model, place the following files under `model/entr`: 
+To load an English to Turkish model, place the following files under `<MODELS_ROOT>/entr`: 
 
 - ctranslator2 model as `model.bin`
-- (Optional) BPE subword codes file (e.g. `bpe.en-tr.codes`)
-- (Optional) Sentencepiece model (To be implemented)
+- (Optional) Shared BPE subword codes file `bpe_file` (e.g. `bpe.en-tr.codes`)
+- (Optional) Sentencepiece model (`src_sentencepiece_model` and `tgt_sentencepiece_model`)
 
 Add the following configuration under `models` in `config.json`:
 
@@ -121,18 +120,15 @@ Example configuration supporting bidirectional English-Kanuri, English-French, E
   "supported_pairs": ["en-kr", "en-fr", "en-ff", "en-ha"],
   "pipeline": {
       "translate": true
-  }
+  },
+  "lang_code_map": {"en": "eng_Latn", "tr": "tur_Latn", "fr": "fra_Latn",
+           "kr": "knc_Latn", "ha": "hau_Latn", "ff": "fuv_Latn","rw": "kin_Latn"}
 }
 ```
 
 Depending on your server architecture, you can choose `checkpoint_id` from `nllb-200-distilled-1.3B`, `nllb-200-distilled-600M` or `nllb-200-3.3B`.
 
-By convention, we use languages in two lettered ISO codes in the configuration file. `app/constants.py` contains the mappings from these codes into the codes used by the NLLB model. This mapping is currently incomplete, so, if you need to add a new language and want to use a language ID other than the one used by NLLB model, you add the mapping into this dictionary. If you prefer, you can use the NLLB id directly in the configuration file as well. The complete list of 200 languages and their respective codes can be viewed through [Flores200 README file](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). 
-
-```
-NLLB_LANGS_DICT = {'en': 'eng_Latn', 'tr': 'tur_Latn', 'fr': 'fra_Latn',
-                   'kr': 'knc_Latn', 'ha': 'hau_Latn', 'ff': 'fuv_Latn'}
-```
+By convention, this API uses two lettered ISO language codes in the configuration file. Since NLLB model uses a different language code convention, you need to create a mapping in the configuration for the correct use of the model (`lang_code_map`). The complete list of 200 languages and their respective codes can be viewed through [Flores200 README file](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). (If you prefer, you can use the NLLB id directly in the configuration file as well. )
 
 ### M2M100 model
 
@@ -156,13 +152,11 @@ Example configuration supporting bidirectional English-Turkish and English-Spani
 
 Depending on your server architecture, you can choose `checkpoint_id` from `m2m100_418M` and `m2m100_1.2B`.
 
-### WARNING: An `alt` code must be assigned when loading multiple multilingual models.
-
 ## Advanced configuration features
 
 ### Alternative model loading
 
-By default one model can be loaded to serve a language direction. Although if you'd like to have multiple models for a language pair or want to have multiple multilingual models, you can use the `alt` parameter in your model configuration. For example, let's load both `opus` and `opus-big` models for `en-fr` from huggingface:
+By default, one model can be loaded to serve a language direction. Although, if you'd like to have multiple models for a language pair or want to have multiple multilingual models, you can use the `alt` parameter in your model configuration. For example, let's load both `opus` and `opus-big` models for `en-fr` direction from huggingface:
 
 ```
 {
@@ -188,7 +182,7 @@ By default one model can be loaded to serve a language direction. Although if yo
 }
 ```
 
-To use the big model, you'll need to specify an `alt` parameter as `big`. (Example shown later below)
+To use the big model while inference request, you'll need to specify an `alt` parameter as `big`. Otherwise, it'll default to the first loaded model. (Example shown later below)
 
 ### Model chaining
 
