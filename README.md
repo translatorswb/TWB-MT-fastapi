@@ -1,28 +1,27 @@
 # TWB-MT-fastapi
 
-API for serving machine translation models. 
+REST API for serving machine translation models in production. 
 
-It can run three types of translation systems:
+It can serve three types of translation systems:
 - [ctranslate2](https://github.com/OpenNMT/CTranslate2) models
 - Certain transformer-based models models provided through [huggingface](https://huggingface.co/).
     - OPUS and OPUS-big models of [Helsinki-NLP](https://huggingface.co/Helsinki-NLP)
     - [NLLB](https://huggingface.co/docs/transformers/v4.28.1/en/model_doc/nllb) (Multilingual)
     - [M2M100](https://huggingface.co/docs/transformers/model_doc/m2m_100) (Multilingual)
-- Custom translators specified as a python module (Experimental)
+- Custom e.g. rule-based translators specified as a python module (Experimental)
    
-Model specifications need to go in `config.json`.
-
 ## Model configuration
+
+Model specifications for TWB-MT-fastapi need to be provided in the `config.json` file. The configuration file enables users to specify the desired translation models, settings, pre and postprocessors they wish to use. Make sure to follow the guidelines in the documentation while configuring the models to ensure smooth integration.
 
 ### Configuration file syntax
 
-API configuration file (`config.json`) is where we specify the models to load and their pipeline. It is a JSON format file containing a dictionary `languages` and a list `models`. Languages is just an (optional) mapping between language codes (e.g. `en`) and language names (e.g. English). `model` lists the model configurations as dictionaries. An minimal example of configuration file:
+API configuration file (`config.json`) is where we specify the models to load and their pipeline. It is a JSON format file containing a dictionary `languages` and a list `models`. Languages is just an (optional) mapping between language codes (e.g. `en`) and language names (e.g. English). `model` lists the model configurations as dictionaries. A minimal example of configuration file for serving an OPUS-big English-to-Turkish model:
 
 ```
 {
   "languages": {
     "en": "English",
-    "fr": "French",
     "tr": "Turkish"
   },
   "models": [
@@ -46,7 +45,7 @@ To load an English to Turkish model, place the following files under `<MODELS_RO
 
 - ctranslator2 model as `model.bin`
 - (Optional) Shared BPE subword codes file `bpe_file` (e.g. `bpe.en-tr.codes`)
-- (Optional) Sentencepiece model (`src_sentencepiece_model` and `tgt_sentencepiece_model`)
+- (Optional) Sentencepiece model (`src_sentencepiece_model` and `tgt_sentencepiece_model`) (Example of this is shown below)
 
 Add the following configuration under `models` in `config.json`:
 
@@ -186,12 +185,89 @@ To use the big model while inference request, you'll need to specify an `alt` pa
 
 ### Model chaining
 
-TODO...
+Model chaining is useful when you want to translate in language directions which you don't have direct models for. 
+
+Let's say you trained bidirectional Kurmanji-English models but want to serve a translator from Kurmanji to Turkish. To serve the Kurmanji to Turkish translator, you can load the Kurmanji-English model as base and place an OPUS English-Turkish model that you already have initialized to the post translator chain (`posttranslatechain`). 
+
+```
+...
+{
+    "src": "en",
+    "tgt": "tr",
+    "model_type": "opus-big",
+    "load": true,
+    "sentence_split": "nltk", 
+    "pipeline": {
+        "translate": true
+    }
+},
+{
+    "src": "kmr",
+    "tgt": "tr",
+    "model_type": "ctranslator2",
+    "model_path": "kmr-en",
+    "src_sentencepiece_model": "sp.model",
+    "tgt_sentencepiece_model": "sp.model",
+    "load": true,
+    "sentence_split": "nltk",
+    "pipeline": {
+        "lowercase": true,
+        "tokenize": false,
+        "sentencepiece": true,
+        "translate": true,
+        "recase": true
+    },
+    "posttranslatechain": ["en-tr"]
+}
+...
+```
+
+Similarly, if you want to translate from Turkish to Kurmanji, you'd put the Turkish to English model in the pre-translator chain (`pretranslatechain`).
+
+```
+...
+{
+    "src": "tr",
+    "tgt": "en",
+    "model_type": "opus",
+    "load": true,
+    "sentence_split": "nltk",
+    "pipeline": {
+        "translate": true
+    }
+},
+{
+    "src": "tr",
+    "tgt": "kmr",
+    "model_type": "ctranslator2",
+    "model_path": "en-kmr",
+    "src_sentencepiece_model": "sp.model",
+    "tgt_sentencepiece_model": "sp.model",
+    "load": true,
+    "sentence_split": "nltk",
+    "pipeline": {
+        "lowercase": true,
+        "tokenize": false,
+        "sentencepiece": true,
+        "translate": true,
+        "recase": true
+    },
+    "pretranslatechain": ["tr-en"]
+}
+...
+```
+
+NOTE: You can chain as many models as you want in translate chains. 
+
+NOTE 2: It's not possible to have non-custom models as base models when chaining. 
 
 ### Custom translator packages
 
-TODO...
+Custom translator packages make it possible to have a script as translator. This feature is built for implementing rule-based translators such as transliterators, text pre/post-processors. 
 
+```
+TODO: Instructions...
+```
 
 ## Build and run
 
