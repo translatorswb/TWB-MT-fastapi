@@ -1,6 +1,6 @@
 from typing import Optional
 import logging
-
+import os
 from app.helpers.config import Config
 
 DEVDEBUG = False
@@ -10,6 +10,8 @@ logger = logging.getLogger('console_logger')
 def translate_text(model_id: str, text: str, src: str, tgt: str) -> Optional[str]:    
     config = Config()
     if DEVDEBUG: logger.debug(f'translate.py/translate_text for {model_id} {src}->{tgt} | {text}') #print('>translate.py/translate_text for', model_id, text, src, tgt)
+
+    
 
     model = config.loaded_models[model_id]
 
@@ -35,9 +37,33 @@ def translate_text(model_id: str, text: str, src: str, tgt: str) -> Optional[str
     
     # Translate batch
     if model['translator']:
-        translated_sentence_batch = model[
-            'translator'
-        ](sentence_batch, src, tgt)
+        translated_sentence_batch = []
+        if model['model_type'] == 'nllb':
+            # for sentence in sentence_batch:
+            inference_url = "/predictions/nllb-200-1.3B"
+            status, translated_sentence = model[
+                'translator'
+            ](inference_url, sentence_batch, src, tgt)
+            if status == 'success':
+                translated_sentence_batch = translated_sentence
+            else:
+                print('##########inference failure##########')
+
+        if model['model_type'] == 'opus':
+            inference_url = f'/predictions/opus-mt-{src}-{tgt}'
+            # for sentence in sentence_batch:     
+            status, translated_sentence = model[
+                'translator'
+            ](inference_url, sentence_batch, src, tgt)
+            if status == 'success':
+                translated_sentence_batch = translated_sentence
+            else:
+                print('##########inference failure##########')
+
+
+        # translated_sentence_batch = model[
+        #     'translator'
+        # ](sentence_batch, src, tgt)
         if DEVDEBUG: logger.debug(f'>translate_text:Translate batch /translated_sentence_batch {translated_sentence_batch}')
     else:
         translated_sentence_batch = sentence_batch
