@@ -183,6 +183,8 @@ By default, one model can be loaded to serve a language direction. Although, if 
 
 To use the big model while inference request, you'll need to specify an `alt` parameter as `big`. Otherwise, it'll default to the first loaded model. (Example shown later below)
 
+**Note**: If loading two multilingual models at the same time, make sure you add `alt` labels to them. If not only the last one will be loaded. While on inference request, you don't need to specify the alt label as it will find the first model with the language direction supported. 
+
 ### Model chaining
 
 Model chaining is useful when you want to translate in language directions which you don't have direct models for. 
