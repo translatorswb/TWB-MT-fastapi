@@ -12,6 +12,7 @@ services:
     volumes:
       - .:/app
       - ../translation-models:/app/models
+      - ./config.json:/app/config.json
     security_opt:
       - seccomp:unconfined
     environment:
