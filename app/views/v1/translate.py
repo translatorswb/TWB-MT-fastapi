@@ -11,7 +11,7 @@ from app.models.v1.translate import (
     TranslationResponse,
 )
 from app.utils.translate import translate_text
-from app.constants import NLLB_LANGS_DICT, MULTIMODALCODE
+from app.constants import MULTIMODALCODE
 
 translate_v1 = APIRouter(prefix='/api/v1/translate')
 
@@ -54,12 +54,13 @@ def fetch_model_data_from_request(request):
     if use_multi:
         if multilingual_model_exists_for_pair:
             #fetch multimodal 
-            print("fetch multimodal ")
-            model_id = get_model_id(src=MULTIMODALCODE,
-                                    tgt=MULTIMODALCODE,
-                                    alt_id=request.alt)
+            # model_id = get_model_id(src=MULTIMODALCODE,
+                                    # tgt=MULTIMODALCODE,
+                                    # alt_id=request.alt)
+            model_id = config._pair_to_model_id(compatible_model_ids[0])
+            if len(compatible_model_ids) > 1:
+                logger.warning(f"More than one compatible model. Choosing {compatible_model_ids[0]} among {compatible_model_ids}")
 
-            #TODO: Fails with alt models
         else:
             raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
