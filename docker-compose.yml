@@ -16,7 +16,7 @@ services:
     environment:
       - MT_API_CONFIG=/app/config.json
       - MT_API_DEVICE=cpu #or gpu, if so make runtime:nvidia
-      - MT_API_THREADS=16
+      - MT_API_THREADS=4
       - MODELS_ROOT=/app/models
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
