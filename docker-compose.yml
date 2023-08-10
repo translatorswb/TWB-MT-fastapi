@@ -13,6 +13,8 @@ services:
       - .:/app
       - ../translation-models:/app/models
       - ./config.json:/app/config.json
+    security_opt:
+      - seccomp:unconfined
     environment:
       - MT_API_CONFIG=/app/config.json
       - MT_API_DEVICE=gpu #or gpu, if so make runtime:nvidia
