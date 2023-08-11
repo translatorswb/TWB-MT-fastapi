@@ -62,4 +62,3 @@ def check_model_load(model_name: str) -> str:
             return 'Failed'
 
     return 'Failed'
-

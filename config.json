@@ -18,7 +18,7 @@
       "checkpoint_id": "nllb-200-distilled-600M",
       "multilingual": true,
       "alt": "nllb",
-      "load": true,
+      "load": false,
       "sentence_split": "nltk",
       "supported_pairs": ["en-kr", "en-fr", "en-ff", "en-ha"],
       "pipeline": {
@@ -32,7 +32,7 @@
       "checkpoint_id": "m2m100_418M",
       "multilingual": true,
       "alt":"m2m",
-      "load": true,
+      "load": false,
       "sentence_split": "nltk",
       "supported_pairs": ["en-tr"],
       "pipeline": {
@@ -91,7 +91,7 @@
       "src": "en",
       "tgt": "fr",
       "model_type": "opus",
-      "load": false,
+      "load": true,
       "sentence_split": "nltk",
       "pipeline": {
         "lowercase": true,
