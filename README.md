@@ -8,8 +8,21 @@ It can serve three types of translation systems:
     - OPUS and OPUS-big models of [Helsinki-NLP](https://huggingface.co/Helsinki-NLP)
     - [NLLB](https://huggingface.co/docs/transformers/v4.28.1/en/model_doc/nllb) (Multilingual)
     - [M2M100](https://huggingface.co/docs/transformers/model_doc/m2m_100) (Multilingual)
-- Custom e.g. rule-based translators specified as a python module (Experimental)
-   
+- Custom e.g. rule-based translators specified as a python module (beta)
+
+Features:
+- REST API for interface
+- Low-code specification for loading various types of models
+- Automatic downloading of huggingface models
+- Model chaining
+- Translation pipeline specification (lowercasing, tokenization, subwording, recasing)
+- Automatic sentence splitting (uses `nltk` library)
+- Manual sentence splitting with punctuation
+- Supports sentencepiece and byte-pair-encoding models
+- GPU support
+- Easy deployment with docker compose 
+- Batch translation
+
 ## Model configuration
 
 Model specifications for TWB-MT-fastapi need to be provided in the `config.json` file. The configuration file enables users to specify the desired translation models, settings, pre and postprocessors they wish to use. Make sure to follow the guidelines in the documentation while configuring the models to ensure smooth integration.
@@ -183,13 +196,13 @@ By default, one model can be loaded to serve a language direction. Although, if 
 
 To use the big model while inference request, you'll need to specify an `alt` parameter as `big`. Otherwise, it'll default to the first loaded model. (Example shown later below)
 
-**Note**: If loading two multilingual models at the same time, make sure you add `alt` labels to them. If not only the last one will be loaded. While on inference request, you don't need to specify the alt label as it will find the first model with the language direction supported. 
+**Note**: When loading two multilingual models at the same time, you must use `alt` labels. If you don't, only the last one will be loaded. While on inference request, you don't need to specify the alt label as it will find the first model with the language direction supported. 
 
 ### Model chaining
 
 Model chaining is useful when you want to translate in language directions which you don't have direct models for. 
 
-Let's say you trained bidirectional Kurmanji-English models but want to serve a translator from Kurmanji to Turkish. To serve the Kurmanji to Turkish translator, you can load the Kurmanji-English model as base and place an OPUS English-Turkish model that you already have initialized to the post translator chain (`posttranslatechain`). 
+Let's say you trained bidirectional Kurmanji-English models but want to serve a translator from Kurmanji to Turkish. To serve the Kurmanji to Turkish translator, you can load the Kurmanji-English model as base and place an OPUS English-Turkish model that you  have already initialized to the post translator chain (`posttranslatechain`). 
 
 ```
 ...
@@ -259,24 +272,86 @@ Similarly, if you want to translate from Turkish to Kurmanji, you'd put the Turk
 ...
 ```
 
-NOTE: You can chain as many models as you want in translate chains. 
+**Note:** You can chain as many models as you want in translate chains. 
 
-NOTE 2: It's not possible to have non-custom models as base models when chaining. 
+**Note 2:** It's not possible to have non-custom models as base models when chaining (yet). 
 
-### Custom translator packages
+### Sentence splitting
 
-Custom translator packages make it possible to have a script as translator. This feature is built for implementing rule-based translators such as transliterators, text pre/post-processors. 
+Machine translation models are usually trained to input and output sentences. When translating a long text, it should be segmented into sentences before inputted to the MT. MT-API can perform this automatically on languages that use latin punctuation (`.`, `?`, `!` etc.) using `nltk library. To do this you just need to add `"sentence_split": "nltk"` to the model configuration. 
+
+If your language has different type of punctuation, then you can manually specify those punctuation marks which mark the ending of a sentence in a list. To illustrate with Tigrinya, a language that uses [Ge'ez script](https://en.wikipedia.org/wiki/Ge%CA%BDez_script), you would add this to its model configuration:
 
 ```
-TODO: Instructions...
+"sentence_split": ["፧", "።", "፨", "?", "!", ":", "“", "”", "\"", "—", "-"]
+```
+
+### Custom translator packages (beta)
+
+Custom translator packages make it possible to have a built-in python script as translator. This feature is built for implementing rule-based translators such as transliterators, text pre/post-processors. 
+
+Custom translator scripts are placed under the directory `customtranslators`. To create a custom translator for a language, open a directory under `customtranslators` with the name of your language and then place the script `interface.py` under `src` there. This script needs to contain a function with the name `translate` which takes the input string and outputs its "translation".
+
+Let's illustrate with a [Arabic chat alphabet (Arabizi)](https://en.wikipedia.org/wiki/Arabic_chat_alphabet) transliterator.  
+
+Content of `customtranslators/arabizi/src/interface.py`:
+
+```
+arabizi_dict = {'ض': 'D', 'ص': 'S', 'ث': 'th', 'ق': 'q', 'ف': 'f', 'غ': 'gh', 'ع': '3', 'ه': 'h', 'خ': 'kh', 'ح': '7', 'ج': 'j', 'ة': 'a', 'ش': 'sh', 'س': 's', 'ي': 'ii', 'ب': 'b', 'ل': 'l', 'ا': 'aa', 'ت': 't', 'ن': 'n', 'م': 'm', 'ك': 'k', 'ظ': 'DH', 'ط': 'T', 'ذ': 'dh', 'د': 'd', 'ز': 'z', 'ر': 'r', 'و': 'uu', '،': ',', 'َ': 'a', 'ِ': 'i', 'ُ': 'u', 'ء': '2', 'أ': '2'} 
+
+def translate(strin):
+    return ''.join(arabizi_dict[c] if c in arabizi_dict else c for c in strin)
+
+```
+
+Entry in configuration file:
+
+```
+{
+    "src": "ar",
+    "tgt": "arb",
+    "model_type": "custom",
+    "model_path": "arabizi",
+    "load": true,
+    "pipeline": {
+        "translate": true
+    }
+}
+```
+
+You can also have multiple interface files for a language like `arabizi/src/interface_to_arabizi.py`, `arabizi/src/interface_from_arabizi.py` and specify the name of the interface script file in the configuration file:
+
+```
+{
+    "src": "ar",
+    "tgt": "arb",
+    "model_type": "custom",
+    "model_path": "arabizi/interface_to_arabizi.py",
+    "load": true,
+    "pipeline": {
+        "translate": true
+    }
+},
+{
+    "src": "arb",
+    "tgt": "ar",
+    "model_type": "custom",
+    "model_path": "arabizi/interface_from_arabizi.py",
+    "load": true,
+    "pipeline": {
+        "translate": true
+    }
+}
 ```
 
 ## Build and run
 
-Set the environment variables:
+To run locally, you can set up a virtual environment with Python 3.8. 
+
+Set the environment variables (linux):
 ```
 MT_API_CONFIG=config.json
-MODELS_ROOT=../translation-models
+MODELS_ROOT=../translation-models #wherever you want your models to be stored
 MT_API_DEVICE=cpu #or "gpu"
 ```
 
@@ -285,7 +360,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8001
 ```
 
-You can also run `run_local.sh` directly. 
+You can also run `run_local.sh` directly on linux. 
 
 ## Build and run with docker-compose (recommended)
 
