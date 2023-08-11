@@ -11,8 +11,9 @@ It can serve three types of translation systems:
 - Custom e.g. rule-based translators specified as a python module (beta)
 
 Features:
-- REST API for interface
-- Low-code specification for loading various types of models
+- Minimal REST API interface for using many models
+- Batch translation
+- Low-code specification for loading various types of models at start-up
 - Automatic downloading of huggingface models
 - Model chaining
 - Translation pipeline specification (lowercasing, tokenization, subwording, recasing)
@@ -21,7 +22,6 @@ Features:
 - Supports sentencepiece and byte-pair-encoding models
 - GPU support
 - Easy deployment with docker compose 
-- Batch translation
 
 ## Model configuration
 
