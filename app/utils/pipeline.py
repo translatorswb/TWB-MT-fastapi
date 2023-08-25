@@ -184,7 +184,9 @@ def load_model_translator(
                 )
                 raise ModelLoadingException
 
-            model['translator'] = get_batch_ctranslator(model_dir)
+            model['translator'] = get_batch_ctranslator(model_dir, 
+                                                        is_multilingual=model_config.get('multilingual'), 
+                                                        lang_map=model_config.get('lang_code_map'))
             msg += '-ctranslator2'
         elif model_config['model_type'] == 'opus':
             opus_translator = get_batch_opustranslator(

@@ -15,6 +15,7 @@ Features:
 - Batch translation
 - Low-code specification for loading various types of models at start-up
 - Automatic downloading of huggingface models
+- Multilingual model support
 - Model chaining
 - Translation pipeline specification (lowercasing, tokenization, subwording, recasing)
 - Automatic sentence splitting (uses `nltk` library)
@@ -52,15 +53,15 @@ API configuration file (`config.json`) is where we specify the models to load an
 }
 ```
 
-### Custom ctranslate2 model configuration
+### CTranslate2 model configuration (unidirectional)
 
-To load an English to Turkish model, place the following files under `<MODELS_ROOT>/entr`: 
+CTranslate is a library for accelerating neural machine translation models, and it supports models in the `model.bin` format. To load your model, place the following files under `<MODELS_ROOT>/<model-identifier>`: 
 
 - ctranslator2 model as `model.bin`
 - (Optional) Shared BPE subword codes file `bpe_file` (e.g. `bpe.en-tr.codes`)
-- (Optional) Sentencepiece model (`src_sentencepiece_model` and `tgt_sentencepiece_model`) (Example of this is shown below)
+- (Optional) Sentencepiece model(s) (e.g. `sentencepiece.model`)
 
-Add the following configuration under `models` in `config.json`:
+For our English-Turkish model, our entry in `config.json` would be:
 
 ```
 {
@@ -81,9 +82,45 @@ Add the following configuration under `models` in `config.json`:
 }
 ```
 
-### OPUS model configuration
+Note that in order to enable subword segmentation in the pipeline, you need to include either `"bpe": true` or `"sentencepiece": true` in the `pipeline` variable.
+
+
+
+### Multilingual CTranslate2 model configuration
+
+It is also possible to load multilingual models with CTranslate2. Here's an example configuration for loading [multilingual NLLB model](https://forum.opennmt.net/t/nllb-200-with-ctranslate2/5090).
+
+```
+{
+      "model_type": "ctranslator2",
+      "model_path": "nllb-200-distilled-1.3B-int8",
+      "src_sentencepiece_model": "flores200_sacrebleu_tokenizer_spm.model",
+      "tgt_sentencepiece_model": "flores200_sacrebleu_tokenizer_spm.model",
+      "multilingual": true,
+      "load": true,
+      "sentence_split": "nltk",
+      "supported_pairs": ["en-rw", "rw-en"],
+      "pipeline": {
+        "lowercase": true,
+        "tokenize": false,
+        "sentencepiece": true,
+        "translate": true,
+        "recase": true
+      },
+      "lang_code_map": {"en": "eng_Latn", "tr": "tur_Latn", 
+                        "fr": "fra_Latn", "rw": "kin_Latn"}
+    }
+``` 
+
+Some things to note here: 
+- We placed the `multilingual` flag to signal to the API that our model accepts language flags during inference. 
+- We specified the language directions we want to serve through our API with the `supported_pairs` variable. These will be the language codes available through your API. If you make a request not in this list, the API will respond saying language pair not supported. 
+- By convention, this API uses two lettered ISO language codes in the configuration file. Since NLLB model uses a different language code convention, we created a mapping in `lang_code_map` variable. The complete list of 200 languages supported by the NLLB model and their respective codes can be viewed through [here](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). If you don't mind using the original language id's you could skip this and put language codes in this format directly to `supported_pairs` e.g. ["eng_Latn-kin_Latn", "kin_Latn-eng_Latn"].
+
+### OPUS model through HuggingFace
 
 You can serve Helsinki-NLP's OPUS models provided in huggingface, as long as they are one-to-one. Make sure they are listed in https://huggingface.co/Helsinki-NLP and place the language codes exactly as they are. 
+
 For an French to English model, add the following configuration under `models` in `config.json`:
 
 ```
@@ -116,9 +153,9 @@ Some models have a different architecture like the [English to Turkish model](ht
 }
 ```
 
-### NLLB model
+### NLLB model through HuggingFace
 
-[NLLB (No Language Left Behind)](https://github.com/facebookresearch/fairseq/tree/nllb) is a multilingal MT model developed by Meta AI that supports [200 languages](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). Model checkpoints of various sizes are [supported through huggingface](https://huggingface.co/docs/transformers/model_doc/nllb) and can be loaded in the API by specifying the checkpoint id and language pairs to be activated in the API configuration. 
+[NLLB (No Language Left Behind)](https://github.com/facebookresearch/fairseq/tree/nllb) is a multilingal MT model developed by Meta AI that supports [200 languages](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). Model checkpoints of various sizes are [supported through HuggingFace](https://huggingface.co/docs/transformers/model_doc/nllb) and can be loaded in the API by specifying the checkpoint id and language pairs to be activated in the API configuration. 
 
 Example configuration supporting bidirectional English-Kanuri, English-French, English-Fulfulde, English-Hausa:
 
@@ -139,8 +176,6 @@ Example configuration supporting bidirectional English-Kanuri, English-French, E
 ```
 
 Depending on your server architecture, you can choose `checkpoint_id` from `nllb-200-distilled-1.3B`, `nllb-200-distilled-600M` or `nllb-200-3.3B`.
-
-By convention, this API uses two lettered ISO language codes in the configuration file. Since NLLB model uses a different language code convention, you need to create a mapping in the configuration for the correct use of the model (`lang_code_map`). The complete list of 200 languages and their respective codes can be viewed through [Flores200 README file](https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200). (If you prefer, you can use the NLLB id directly in the configuration file as well. )
 
 ### M2M100 model
 
@@ -196,7 +231,7 @@ By default, one model can be loaded to serve a language direction. Although, if 
 
 To use the big model while inference request, you'll need to specify an `alt` parameter as `big`. Otherwise, it'll default to the first loaded model. (Example shown later below)
 
-**Note**: When loading two multilingual models at the same time, you must use `alt` labels. If you don't, only the last one will be loaded. While on inference request, you don't need to specify the alt label as it will find the first model with the language direction supported. 
+**Note**: When loading two multilingual models at the same time, you _must_ use `alt` labels. If you don't, only the last one will be loaded. Unless you have two models supporting in the same language direction, you don't need to specify the alt label in your request, as it will automatically find the  model which supports that language direction. 
 
 ### Model chaining
 
@@ -274,17 +309,19 @@ Similarly, if you want to translate from Turkish to Kurmanji, you'd put the Turk
 
 **Note:** You can chain as many models as you want in translate chains. 
 
-**Note 2:** It's not possible to have non-custom models as base models when chaining (yet). 
+**Note 2:** It's only possible to have ctranslate type models as base models when chaining (for now). 
 
 ### Sentence splitting
 
-Machine translation models are usually trained to input and output sentences. When translating a long text, it should be segmented into sentences before inputted to the MT. MT-API can perform this automatically on languages that use latin punctuation (`.`, `?`, `!` etc.) using `nltk library. To do this you just need to add `"sentence_split": "nltk"` to the model configuration. 
+Machine translation models are usually trained to input and output sentences. When translating a long text, it should be segmented into sentences before inputted to the MT. MT-API can perform this automatically on languages that use latin punctuation (`.`, `?`, `!` etc.) using `nltk` library. To do this you just need to add `"sentence_split": "nltk"` to the model configuration. 
 
 If your language has different type of punctuation, then you can manually specify those punctuation marks which mark the ending of a sentence in a list. To illustrate with Tigrinya, a language that uses [Ge'ez script](https://en.wikipedia.org/wiki/Ge%CA%BDez_script), you would add this to its model configuration:
 
 ```
 "sentence_split": ["፧", "።", "፨", "?", "!", ":", "“", "”", "\"", "—", "-"]
 ```
+
+Note that if you don't specify a technique for sentence splitting, the whole text input in the request will be sent to the model. Long text input can overload the model or only a portion would be processed. 
 
 ### Custom translator packages (beta)
 
@@ -371,7 +408,8 @@ docker-compose up
 
 ### To use GPU on docker
 
-Do the following edits on docker-compose file
+Do the following edits on docker-compose file:
+
 1. Remove comment on `runtime: nvidia` line
 2. Under environment, set `MT_API_DEVICE=gpu`
 3. Build and run.
