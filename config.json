@@ -30,28 +30,45 @@
       }
     },
     {
-      "model_type": "nllb",
-      "checkpoint_id": "DigitalUmuganda/m2m100_en_kin_from_en_fr",
+      "model_type": "ctranslator2",
+      "model_path": "nllb-200-distilled-600M-int8",
+      "alt": "education",
+      "src_sentencepiece_model": "flores200_sacrebleu_tokenizer_spm.model",
+      "tgt_sentencepiece_model": "flores200_sacrebleu_tokenizer_spm.model",
       "multilingual": true,
       "load": false,
       "alt": "du_en_kin",
       "sentence_split": "nltk",
-      "supported_pairs": ["en-fr"],
+      "supported_pairs": ["en-rw", "rw-en"],
       "pipeline": {
-          "translate": true
-      }
+        "lowercase": true,
+        "tokenize": false,
+        "sentencepiece": true,
+        "translate": true,
+        "recase": true
+      },
+      "lang_code_map": {"en": "eng_Latn", "tr": "tur_Latn", 
+                        "fr": "fra_Latn", "rw": "kin_Latn"}
     },
     {
-      "model_type": "nllb",
-      "checkpoint_id": "DigitalUmuganda/...",
+      "model_type": "ctranslator2",
+      "model_path": "nllb-200-distilled-600M-int8",
+      "alt": "tourism",
+      "src_sentencepiece_model": "flores200_sacrebleu_tokenizer_spm.model",
+      "tgt_sentencepiece_model": "flores200_sacrebleu_tokenizer_spm.model",
       "multilingual": true,
-      "load": false,
-      "alt": "du_kin_en",
+      "load": true,
       "sentence_split": "nltk",
-      "supported_pairs": ["fr-en"],
+      "supported_pairs": ["en-rw", "rw-en"],
       "pipeline": {
-          "translate": true
-      }
+        "lowercase": true,
+        "tokenize": false,
+        "sentencepiece": true,
+        "translate": true,
+        "recase": true
+      },
+      "lang_code_map": {"en": "eng_Latn", "tr": "tur_Latn", 
+                        "fr": "fra_Latn", "rw": "kin_Latn"}
     },
     {
       "src": "en",
@@ -236,7 +253,7 @@
     },
     {
       "src": "en",
-      "tgt": "ha",
+      "tgt": "ha", 
       "model_type": "ctranslator2",
       "model_path": "enha",
       "src_sentencepiece_model": "en.model",
