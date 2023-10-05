@@ -44,7 +44,7 @@ def get_ctranslator(ctranslator_model_path: str) -> Callable:
     return translator
 
 
-def get_batch_ctranslator(ctranslator_model_path: str) -> Callable:
+def get_batch_ctranslator(ctranslator_model_path: str, is_multilingual: bool = False, lang_map:dict=None) -> Callable:
     from ctranslate2 import Translator
 
     ctranslator = Translator(
@@ -52,12 +52,22 @@ def get_batch_ctranslator(ctranslator_model_path: str) -> Callable:
         device=CTRANSLATE_DEVICE,
         inter_threads=CTRANSLATE_INTER_THREADS,
     )
-    # translator = lambda x: [
-    #     s[0]['tokens'] for s in ctranslator.translate_batch(x)
-    # ]
 
     def translator(src_texts, src=None, tgt=None):
-        return [s[0]['tokens'] for s in ctranslator.translate_batch(src_texts)]
+        if is_multilingual:
+            if lang_map:
+                src = lang_map.get(src) if src in lang_map else src
+                tgt = lang_map.get(tgt) if tgt in lang_map else tgt
+
+            target_prefix = [[tgt]] * len(src_texts)
+            src_texts = [sent + ["</s>", src] for sent in src_texts]
+
+            translations = ctranslator.translate_batch(src_texts, target_prefix=target_prefix)
+            translations = [translation.hypotheses[0][1:] for translation in translations]
+        else:
+            translations = [s.hypotheses[0] for s in ctranslator.translate_batch(src_texts)]
+
+        return translations
 
     return translator
 
