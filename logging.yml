@@ -2,24 +2,24 @@ version: 1
 disable_existing_loggers: false
 
 formatters:
-  standard:
-    format: "[ %(asctime)s ] %(levelname)s:  %(message)s"
+  detail:
+    format: "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)d - %(message)s"
   simple:
-    format: "%(levelname)s:  %(message)s"
+    format: "%(levelname)-8s | %(message)s"
 
 handlers:
-  console:
-    class: logging.StreamHandler
-    formatter: standard
-    stream: ext://sys.stdout
   simple:
     class: logging.StreamHandler
     formatter: simple
     stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    formatter: detail
+    filename: app.log
 
 loggers:
   console_logger:
-    handlers: [simple]
+    handlers: [simple, file]
     level: DEBUG
     propagate: false
   uvicorn:
@@ -28,5 +28,5 @@ loggers:
 
 root:
   level: INFO
-  handlers: [console]
+  handlers: [simple, file]
   propagate: no
