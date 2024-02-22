@@ -39,7 +39,7 @@ def get_ctranslator(ctranslator_model_path: str) -> Callable:
     # ]  
 
     def translator(text, src=None, tgt=None):
-        return ctranslator.translate_batch([text])[0][0]['tokens']
+        return ctranslator.translate_batch([text],disable_unk=True)[0][0]['tokens']
 
     return translator
 
