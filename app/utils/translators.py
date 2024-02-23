@@ -62,7 +62,7 @@ def get_batch_ctranslator(ctranslator_model_path: str, is_multilingual: bool = F
             target_prefix = [[tgt]] * len(src_texts)
             src_texts = [sent + ["</s>", src] for sent in src_texts]
 
-            translations = ctranslator.translate_batch(src_texts, target_prefix=target_prefix)
+            translations = ctranslator.translate_batch([src_texts],disable_unk=True, target_prefix=target_prefix)
             translations = [translation.hypotheses[0][1:] for translation in translations]
         else:
             translations = [s.hypotheses[0] for s in ctranslator.translate_batch(src_texts)]
